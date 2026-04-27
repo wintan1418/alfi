@@ -1,15 +1,23 @@
-# examples:
-#   periodic_cleanup:
-#     class: CleanSoftDeletedRecordsJob
-#     queue: background
-#     args: [ 1000, { batch_size: 500 } ]
-#     schedule: every hour
-#   periodic_cleanup_with_command:
-#     command: "SoftDeletedRecord.due.delete_all"
-#     priority: 2
-#     schedule: at 5am every day
+# Recurring jobs run by Solid Queue. Schedules use fugit syntax (cron-like + sugar).
+# Only active in production by default; uncomment in development to test locally.
 
 production:
+  scheduled_posts_scan:
+    class: ScheduledPostsScanJob
+    queue: default
+    schedule: every minute
+
+  click_rollup:
+    class: ClickRollupJob
+    queue: default
+    schedule: at 03:30 every day
+
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
+
+# Uncomment in dev to verify the scanner picks up scheduled posts:
+# development:
+#   scheduled_posts_scan:
+#     class: ScheduledPostsScanJob
+#     schedule: every 30 seconds

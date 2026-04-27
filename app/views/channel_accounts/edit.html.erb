@@ -1,0 +1,98 @@
+<% content_for :active_nav, "settings" %>
+<% content_for :title, "#{@channel.platform.titleize} channel" %>
+<% @crumbs = ["alfi", "Settings", "Channels", @channel.platform.titleize] %>
+
+<div class="page-narrow">
+  <%= link_to channel_accounts_path, class: "btn ghost sm", style: "margin-bottom:16px" do %>
+    <%= icon :chev, size: 11, style: "transform:rotate(180deg)" %> Back to channels
+  <% end %>
+
+  <div class="eyebrow" style="margin-bottom:6px"><%= @channel.platform.to_s.titleize %> channel</div>
+  <h1 class="section-h" style="margin-bottom:6px"><%= @channel.display_name.presence || @channel.handle.presence || @channel.platform.to_s.titleize %></h1>
+  <div class="section-sub" style="margin-bottom:24px">
+    Tokens are stored encrypted via Active Record Encryption. Never logged.
+  </div>
+
+  <%= form_with model: @channel, url: channel_account_path(@channel), method: :patch, class: "card", style: "padding:20px;gap:16px;display:flex;flex-direction:column" do |f| %>
+    <%# Common fields %>
+    <div class="col" style="gap:6px">
+      <label class="eyebrow">Handle</label>
+      <%= f.text_field :handle, class: "input mono", placeholder: @channel.platform.to_s == "telegram" ? "@alfifinds" : "alfifinds" %>
+    </div>
+
+    <div class="col" style="gap:6px">
+      <label class="eyebrow">Display name</label>
+      <%= f.text_field :display_name, class: "input", placeholder: "Alfi Finds" %>
+    </div>
+
+    <%# Platform-specific credentials %>
+    <% case @channel.platform.to_sym %>
+    <% when :telegram %>
+      <div class="hr"></div>
+      <div class="eyebrow">Telegram credentials</div>
+
+      <div class="col" style="gap:6px">
+        <label style="font-size:12px;font-weight:500">Bot token</label>
+        <%= f.text_field :bot_token, name: "channel_account[bot_token]", class: "input mono",
+              placeholder: @creds["bot_token"].present? ? "•••••••••••• (saved — leave blank to keep)" : "123456789:AAAA..." %>
+        <div class="mono" style="font-size:11px;color:var(--ink-3)">
+          From <a href="https://t.me/BotFather" target="_blank" rel="noopener" style="color:var(--info)">@BotFather</a> after <code>/newbot</code>.
+        </div>
+      </div>
+
+      <div class="col" style="gap:6px">
+        <label style="font-size:12px;font-weight:500">Channel chat ID</label>
+        <%= f.text_field :chat_id, name: "channel_account[chat_id]", class: "input mono",
+              value: @creds["chat_id"], placeholder: "-1001234567890" %>
+        <div class="mono" style="font-size:11px;color:var(--ink-3)">
+          Add the bot as channel admin → forward any channel message to <code>@userinfobot</code> → copy the chat ID.
+        </div>
+      </div>
+
+    <% when :pinterest %>
+      <div class="hr"></div>
+      <div class="eyebrow">Pinterest credentials</div>
+      <div style="padding:12px;background:var(--accent-bg);border-radius:6px;font-size:12px;color:var(--accent-fg)">
+        <%= icon :bolt, size: 11, stroke: 2.2, style: "vertical-align:-2px;margin-right:4px" %>
+        Real Pinterest connection requires OAuth. Set <code>PINTEREST_APP_ID</code> + <code>PINTEREST_APP_SECRET</code> in env, then come back — we'll wire the callback flow.
+      </div>
+      <div class="col" style="gap:6px">
+        <label style="font-size:12px;font-weight:500">Board ID (optional default)</label>
+        <%= f.text_field :board_id, name: "channel_account[board_id]", class: "input mono",
+              value: @creds["board_id"], placeholder: "12345678901234567" %>
+      </div>
+
+    <% when :x %>
+      <div class="hr"></div>
+      <div class="eyebrow">X / Twitter credentials</div>
+      <div style="padding:12px;background:var(--accent-bg);border-radius:6px;font-size:12px;color:var(--accent-fg)">
+        <%= icon :bolt, size: 11, stroke: 2.2, style: "vertical-align:-2px;margin-right:4px" %>
+        Posting requires X API Basic tier ($200/mo). Set <code>X_CLIENT_ID</code> + <code>X_CLIENT_SECRET</code> when ready.
+      </div>
+
+    <% when :tiktok %>
+      <div class="hr"></div>
+      <div style="padding:12px;background:var(--bg-2);border-radius:6px;font-size:12px;color:var(--ink-3);font-style:italic">
+        TikTok has no public posting API for affiliate accounts. alfi runs in <strong>assist mode</strong> — generates the 30s script + asset pack, you upload manually.
+      </div>
+
+    <% when :instagram %>
+      <div class="hr"></div>
+      <div style="padding:12px;background:var(--bg-2);border-radius:6px;font-size:12px;color:var(--ink-3);font-style:italic">
+        Instagram Graph API doesn't allow links in captions, which kills the affiliate flow. Currently paused — reactivate when Meta opens this up.
+      </div>
+    <% end %>
+
+    <div class="hr"></div>
+
+    <div class="row" style="gap:8px">
+      <%= f.check_box :active %>
+      <label style="font-size:13px;color:var(--ink-2)">Active — alfi will publish here when angles ship</label>
+    </div>
+
+    <div class="row" style="gap:10px;margin-top:8px">
+      <%= f.submit "Save channel", class: "btn primary", style: "padding:8px 14px;font-weight:600" %>
+      <%= link_to "Cancel", channel_accounts_path, class: "btn ghost" %>
+    </div>
+  <% end %>
+</div>

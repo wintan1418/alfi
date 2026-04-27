@@ -1,0 +1,55 @@
+<% content_for :active_nav, "settings" %>
+<% content_for :title, "Channels" %>
+<% @crumbs = ["alfi", "Settings", "Channels"] %>
+
+<div class="page">
+  <div class="spread" style="margin-bottom:20px">
+    <div>
+      <h1 class="section-h">Channels</h1>
+      <div class="section-sub">Where alfi posts on your behalf. Tokens stored encrypted.</div>
+    </div>
+    <%= link_to settings_path, class: "btn sm ghost" do %>
+      <%= icon :chev, size: 11, style: "transform:rotate(180deg)" %> Back to settings
+    <% end %>
+  </div>
+
+  <% if flash[:notice] %>
+    <div class="card" style="padding:12px 16px;background:var(--pos-bg);color:var(--pos);font-size:12px;margin-bottom:16px;border-color:transparent">
+      <%= flash[:notice] %>
+    </div>
+  <% end %>
+
+  <div class="card" style="padding:0">
+    <% @channels.each_with_index do |c, i| %>
+      <%
+        creds_ok = c.credentials_valid?
+        meta_text = case c.platform.to_sym
+                    when :telegram  then "@#{c.handle.to_s.delete_prefix('@')} · #{creds_ok ? 'bot connected' : 'bot token missing'}"
+                    when :pinterest then "#{c.handle} · #{creds_ok ? 'access token set' : 'OAuth flow needed'}"
+                    when :x         then "@#{c.handle.to_s.delete_prefix('@')} · #{creds_ok ? 'token set' : 'OAuth needed'}"
+                    when :tiktok    then "Assist mode — script + assets only (no posting API)"
+                    when :instagram then "#{c.handle} · Graph API · no link in caption"
+                    end
+      %>
+      <div class="row" style="padding:14px 18px;gap:14px;<%= 'border-bottom:1px solid var(--line)' unless i == @channels.size - 1 %>">
+        <div style="width:32px;height:32px;border-radius:6px;background:var(--<%= { 'telegram'=>'tg', 'pinterest'=>'pin', 'x'=>'x', 'tiktok'=>'tt', 'instagram'=>'ig' }[c.platform.to_s] %>);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;font-family:var(--font-mono)">
+          <%= c.platform.to_s[0].upcase %>
+        </div>
+        <div style="flex:1">
+          <div class="row" style="gap:8px">
+            <span style="font-size:14px;color:var(--ink);font-weight:600"><%= c.platform.to_s.titleize %></span>
+            <% if c.active && creds_ok %>
+              <span class="tag live"><span class="dot"></span>Live</span>
+            <% elsif c.active %>
+              <span class="tag flagged">Needs setup</span>
+            <% else %>
+              <span class="tag warn">Disabled</span>
+            <% end %>
+          </div>
+          <div class="mono" style="font-size:11px;color:var(--ink-3);margin-top:3px"><%= meta_text %></div>
+        </div>
+        <%= link_to "Configure", edit_channel_account_path(c), class: "btn sm" %>
+      </div>
+    <% end %>
+  </div>
+</div>
