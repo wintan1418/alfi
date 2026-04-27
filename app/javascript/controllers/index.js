@@ -12,3 +12,6 @@ application.register("theme", ThemeController)
 
 import TabsController from "./tabs_controller"
 application.register("tabs", TabsController)
+
+import ClipboardController from "./clipboard_controller"
+application.register("clipboard", ClipboardController)

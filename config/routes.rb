@@ -20,6 +20,10 @@ Rails.application.routes.draw do
       patch :select_angle
       patch :set_affiliate_url
     end
+    collection do
+      get :bulk_affiliates
+      patch :update_bulk_affiliates
+    end
   end
 
   resources :posts, only: [ :new, :create ]

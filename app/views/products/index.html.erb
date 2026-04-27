@@ -31,6 +31,9 @@
       </div>
     </div>
     <div class="row" style="gap:8px">
+      <%= link_to bulk_affiliates_products_path, class: "btn" do %>
+        <%= icon :link, size: 13 %> Bulk affiliate URLs
+      <% end %>
       <button class="btn"><%= icon :upload, size: 13 %> Import CSV</button>
       <%= link_to new_product_path, class: "btn accent" do %>
         <%= icon :plus, size: 13, stroke: 2.2 %> Add product

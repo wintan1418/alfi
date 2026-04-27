@@ -71,6 +71,50 @@ class ProductsController < ApplicationController
     redirect_to product_path(product, anchor: "platform-#{short}")
   end
 
+  # GET /products/bulk_affiliates
+  def bulk_affiliates
+    scope = params[:show] == "all" ? Product.all : Product.where(affiliate_url: [ nil, "" ])
+    @products = scope.order(:id)
+    @show_all = params[:show] == "all"
+    @missing_count = Product.where(affiliate_url: [ nil, "" ]).count
+    @nav_counts = nav_counts
+  end
+
+  # PATCH /products/update_bulk_affiliates
+  def update_bulk_affiliates
+    raw = params[:affiliate_urls].to_s
+    urls = raw.split(/\r?\n/).map(&:strip).reject(&:empty?)
+
+    scope = params[:show] == "all" ? Product.all : Product.where(affiliate_url: [ nil, "" ])
+    products = scope.order(:id).to_a
+
+    saved = 0
+    errors = []
+
+    urls.each_with_index do |url, idx|
+      target = products[idx]
+      if target.nil?
+        errors << "line #{idx + 1}: no matching product slot"
+        next
+      end
+      unless url.match?(%r{\Ahttps?://}i)
+        errors << "line #{idx + 1}: not a URL"
+        next
+      end
+
+      target.update!(affiliate_url: url)
+      ShortLink.where(linkable: target).update_all(destination_url: url)
+      saved += 1
+    end
+
+    if errors.any?
+      flash[:alert] = "Saved #{saved}, skipped #{errors.size}: #{errors.first(3).join('; ')}#{'…' if errors.size > 3}"
+    else
+      flash[:notice] = "Saved #{saved} affiliate URL#{saved == 1 ? '' : 's'}. Short links repointed."
+    end
+    redirect_to bulk_affiliates_products_path(show: params[:show])
+  end
+
   private
 
   def product_params

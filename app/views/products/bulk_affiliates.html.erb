@@ -1,0 +1,131 @@
+<% content_for :active_nav, "products" %>
+<% content_for :title, "Bulk affiliate URLs" %>
+<% @crumbs = ["alfi", "Products", "Bulk affiliate URLs"] %>
+
+<div class="page">
+  <div class="spread" style="margin-bottom:20px">
+    <div>
+      <h1 class="section-h">Paste affiliate URLs in bulk.</h1>
+      <div class="section-sub">
+        Copy the source URLs on the left, paste them into your Temu affiliate dashboard's bulk converter, then drop the tracked URLs back on the right — one per line, same order.
+      </div>
+    </div>
+    <%= link_to products_path, class: "btn sm ghost" do %>
+      <%= icon :chev, size: 11, style: "transform:rotate(180deg)" %> Back to products
+    <% end %>
+  </div>
+
+  <% if flash[:alert] %>
+    <div class="card" style="padding:10px 14px;background:var(--neg-bg);color:var(--neg);font-size:12px;margin-bottom:16px;border-color:transparent">
+      <%= flash[:alert] %>
+    </div>
+  <% end %>
+  <% if flash[:notice] %>
+    <div class="card" style="padding:10px 14px;background:var(--pos-bg);color:var(--pos);font-size:12px;margin-bottom:16px;border-color:transparent">
+      <%= flash[:notice] %>
+    </div>
+  <% end %>
+
+  <div class="row" style="margin-bottom:14px;gap:8px">
+    <% if @show_all %>
+      <%= link_to "Showing all (#{Product.count})", bulk_affiliates_products_path,
+            class: "btn sm", style: "background:var(--ink);color:var(--bg);border-color:var(--ink)" %>
+      <%= link_to "Only missing (#{@missing_count})", bulk_affiliates_products_path,
+            class: "btn sm ghost" %>
+    <% else %>
+      <%= link_to "Only missing (#{@missing_count})", bulk_affiliates_products_path,
+            class: "btn sm", style: "background:var(--ink);color:var(--bg);border-color:var(--ink)" %>
+      <%= link_to "Show all (#{Product.count})", bulk_affiliates_products_path(show: "all"),
+            class: "btn sm ghost" %>
+    <% end %>
+    <div style="flex:1"></div>
+    <span class="mono" style="font-size:11px;color:var(--ink-3)">
+      <%= @products.count %> rows in this batch
+    </span>
+  </div>
+
+  <% if @products.empty? %>
+    <div class="card" style="padding:32px;text-align:center;color:var(--ink-3)">
+      <div class="eyebrow" style="margin-bottom:8px">Nothing here</div>
+      <div style="font-size:13px">
+        <% if @show_all %>
+          You don't have any products yet. <%= link_to "Add one", new_product_path, style: "color:var(--accent-fg)" %>.
+        <% else %>
+          Every product already has an affiliate URL set. <%= link_to "Show all anyway", bulk_affiliates_products_path(show: "all"), style: "color:var(--accent-fg)" %>.
+        <% end %>
+      </div>
+    </div>
+  <% else %>
+    <%# Two columns: source list (left) + paste form (right) %>
+    <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:20px;align-items:start">
+
+      <%# LEFT — source URL list %>
+      <div class="card" style="padding:0">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Source URLs · in order</div>
+            <div class="card-sub" style="margin-top:2px">paste these into Temu's bulk converter</div>
+          </div>
+          <div style="flex:1"></div>
+          <button type="button"
+                  data-controller="clipboard"
+                  data-action="clipboard#copy"
+                  data-clipboard-target="trigger"
+                  data-text="<%= @products.map(&:source_url).join("\n") %>"
+                  class="btn sm" style="font-weight:600">
+            <%= icon :upload, size: 11 %> <span data-clipboard-target="label">Copy all</span>
+          </button>
+        </div>
+        <div style="max-height:60vh;overflow-y:auto">
+          <% @products.each_with_index do |p, i| %>
+            <div style="padding:10px 16px;<%= 'border-bottom:1px solid var(--line)' unless i == @products.size - 1 %>;display:grid;grid-template-columns:36px 1fr auto;gap:10px;align-items:center">
+              <span class="mono" style="font-size:11px;color:var(--ink-3);text-align:right"><%= "%02d" % (i + 1) %></span>
+              <div style="min-width:0">
+                <div style="font-size:12px;color:var(--ink);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                  <%= truncate(p.title, length: 50) %>
+                </div>
+                <div class="mono" style="font-size:10px;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                  <%= truncate(p.source_url, length: 60) %>
+                </div>
+              </div>
+              <% if p.affiliate_url.present? %>
+                <span class="tag live" style="font-size:9px"><span class="dot"></span>set</span>
+              <% else %>
+                <span class="tag flagged" style="font-size:9px">needs URL</span>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <%# RIGHT — paste form %>
+      <div>
+        <%= form_with url: update_bulk_affiliates_products_path(show: params[:show]),
+              method: :patch, class: "card", style: "padding:18px" do |f| %>
+          <div class="eyebrow" style="margin-bottom:8px">Paste tracked URLs</div>
+          <div style="font-size:12px;color:var(--ink-3);margin-bottom:12px;line-height:1.55">
+            One URL per line. Empty lines skipped. Order must match the list on the left.
+          </div>
+
+          <%= f.text_area :affiliate_urls, rows: 18, class: "input mono",
+                style: "width:100%;min-height:340px;font-size:11px;padding:10px;line-height:1.5",
+                placeholder: "https://temu.com/...?aff=alfi\nhttps://temu.com/...?aff=alfi\n..." %>
+
+          <div class="row" style="gap:10px;margin-top:14px">
+            <%= f.submit "Save #{@products.count} URLs", class: "btn accent",
+                  style: "padding:10px 18px;font-size:13px;font-weight:600" %>
+            <%= link_to "Cancel", products_path, class: "btn ghost" %>
+          </div>
+        <% end %>
+
+        <div style="margin-top:14px;font-size:11px;color:var(--ink-3);line-height:1.7">
+          <div class="eyebrow" style="margin-bottom:6px">how it works</div>
+          1. Hit <strong>Copy all</strong> on the left.<br>
+          2. In Temu's affiliate dashboard, find <em>Convert Link → Bulk</em>, paste, run.<br>
+          3. Copy the returned tracked URLs (same order Temu emits them).<br>
+          4. Paste here. We save each URL to the matching product by row index, then re-point existing short links.
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>
