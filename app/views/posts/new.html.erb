@@ -1,0 +1,89 @@
+<% content_for :active_nav, "calendar" %>
+<% content_for :title, "Schedule a post" %>
+<% @crumbs = ["alfi", "Calendar", "Schedule"] %>
+
+<div class="page-narrow">
+  <%= link_to calendar_path, class: "btn ghost sm", style: "margin-bottom:16px" do %>
+    <%= icon :chev, size: 11, style: "transform:rotate(180deg)" %> Back to calendar
+  <% end %>
+
+  <div class="eyebrow" style="margin-bottom:6px">Schedule</div>
+  <h1 class="section-h" style="margin-bottom:6px">Drop a post into the queue.</h1>
+  <div class="section-sub" style="margin-bottom:24px">
+    Pick a product, an angle, and when it should ship. The scheduler runs every minute and publishes due posts automatically.
+  </div>
+
+  <%= form_with url: posts_path, class: "card", style: "padding:20px;display:flex;flex-direction:column;gap:18px" do %>
+    <div class="col" style="gap:6px">
+      <label class="eyebrow">Product</label>
+      <select name="product_id_picker" id="post-product-picker" class="input mono">
+        <option value="">— choose a product —</option>
+        <% @products.each do |p| %>
+          <option value="<%= p.id %>"
+                  data-angles="<%= p.content_angles.where(status: %i[approved draft]).to_json(only: [:id, :platform, :tone]) %>"
+                  <%= "selected" if @prefill_product_id == p.id.to_s %>>
+            <%= p.legacy_id %> · <%= truncate(p.title, length: 44) %>
+          </option>
+        <% end %>
+      </select>
+    </div>
+
+    <div class="col" style="gap:6px">
+      <label class="eyebrow">Angle</label>
+      <select name="content_angle_id" id="post-angle-picker" class="input mono" required>
+        <option value="">— pick a product first —</option>
+      </select>
+      <div class="mono" style="font-size:11px;color:var(--ink-3)">
+        Angles you've already approved show first.
+      </div>
+    </div>
+
+    <div class="col" style="gap:6px">
+      <label class="eyebrow">When</label>
+      <input type="datetime-local" name="scheduled_at" required
+             value="<%= @default_time %>"
+             class="input mono" style="max-width:280px">
+      <div class="mono" style="font-size:11px;color:var(--ink-3)">
+        Time zone: <%= Time.zone.name %>. The scanner enqueues publishes in 1-minute resolution.
+      </div>
+    </div>
+
+    <div class="row" style="gap:10px;margin-top:8px">
+      <button type="submit" class="btn accent" style="padding:10px 18px;font-weight:600">
+        <%= icon :send, size: 13, stroke: 2 %> Schedule post
+      </button>
+      <%= link_to "Cancel", calendar_path, class: "btn ghost" %>
+    </div>
+  <% end %>
+</div>
+
+<script type="module">
+  // Populate angle picker when a product is chosen
+  const productSel = document.getElementById("post-product-picker")
+  const angleSel = document.getElementById("post-angle-picker")
+  const platformLabel = { telegram: "Telegram", pinterest: "Pinterest", x: "X", tiktok: "TikTok", instagram: "Instagram" }
+
+  function repopulate() {
+    const opt = productSel.selectedOptions[0]
+    angleSel.innerHTML = ""
+    if (!opt || !opt.value) {
+      angleSel.innerHTML = '<option value="">— pick a product first —</option>'
+      return
+    }
+    let angles = []
+    try { angles = JSON.parse(opt.dataset.angles || "[]") } catch (_) {}
+    if (!angles.length) {
+      angleSel.innerHTML = '<option value="">no angles generated yet for this product</option>'
+      return
+    }
+    angles.forEach(a => {
+      const o = document.createElement("option")
+      o.value = a.id
+      o.textContent = `${platformLabel[a.platform] || a.platform} · ${a.tone}`
+      angleSel.appendChild(o)
+    })
+  }
+
+  productSel.addEventListener("change", repopulate)
+  if (productSel.value) repopulate()
+</script>

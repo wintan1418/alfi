@@ -23,7 +23,7 @@
       <%= link_to "Week",  calendar_path(view: "week"),  class: ("btn sm" + (@view == "week"  ? "" : " ghost")) %>
       <%= link_to "Month", calendar_path(view: "month"), class: ("btn sm" + (@view == "month" ? "" : " ghost")) %>
 
-      <%= link_to new_product_path, class: "btn accent", style: "margin-left:8px" do %>
+      <%= link_to new_post_path, class: "btn accent", style: "margin-left:8px" do %>
         <%= icon :plus, size: 11, stroke: 2.2 %> Schedule
       <% end %>
     </div>

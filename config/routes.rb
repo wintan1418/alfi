@@ -18,8 +18,11 @@ Rails.application.routes.draw do
   resources :products, only: [ :index, :new, :create, :show ] do
     member do
       patch :select_angle
+      patch :set_affiliate_url
     end
   end
+
+  resources :posts, only: [ :new, :create ]
 
   resources :channel_accounts, only: [ :index, :edit, :update ], path: "channels"
 

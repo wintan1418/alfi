@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_27_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_27_160000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -171,6 +171,43 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_27_150000) do
     t.index ["slug"], name: "index_short_links_on_slug", unique: true
   end
 
+  create_table "statement_rows", force: :cascade do |t|
+    t.bigint "commission_cents"
+    t.datetime "created_at", null: false
+    t.string "currency", limit: 3, default: "USD", null: false
+    t.string "external_order_id"
+    t.integer "match_confidence", default: 0
+    t.datetime "occurred_at"
+    t.bigint "post_id"
+    t.string "raw_product_label"
+    t.jsonb "raw_row", default: {}, null: false
+    t.bigint "short_link_id"
+    t.bigint "statement_id", null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["external_order_id"], name: "index_statement_rows_on_external_order_id"
+    t.index ["post_id"], name: "index_statement_rows_on_post_id"
+    t.index ["short_link_id"], name: "index_statement_rows_on_short_link_id"
+    t.index ["statement_id", "status"], name: "index_statement_rows_on_statement_id_and_status"
+    t.index ["statement_id"], name: "index_statement_rows_on_statement_id"
+  end
+
+  create_table "statements", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "currency", limit: 3, default: "USD", null: false
+    t.integer "matched_count", default: 0, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.string "original_filename"
+    t.string "period", null: false
+    t.integer "rows_count", default: 0, null: false
+    t.integer "status", default: 0, null: false
+    t.bigint "total_reported_cents"
+    t.datetime "updated_at", null: false
+    t.datetime "uploaded_at"
+    t.index ["period"], name: "index_statements_on_period", unique: true
+    t.index ["status"], name: "index_statements_on_status"
+  end
+
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email_address", null: false
@@ -188,4 +225,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_27_150000) do
   add_foreign_key "posts", "short_links"
   add_foreign_key "product_images", "products"
   add_foreign_key "sessions", "users"
+  add_foreign_key "statement_rows", "posts"
+  add_foreign_key "statement_rows", "short_links"
+  add_foreign_key "statement_rows", "statements"
 end

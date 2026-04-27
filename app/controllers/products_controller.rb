@@ -38,6 +38,21 @@ class ProductsController < ApplicationController
 
   PLATFORM_SHORT = { "tg" => "telegram", "pin" => "pinterest", "x" => "x", "tt" => "tiktok", "ig" => "instagram" }.freeze
 
+  # PATCH /products/:id/set_affiliate_url
+  def set_affiliate_url
+    product = Product.find(params[:id])
+    url = params.require(:product).permit(:affiliate_url).fetch(:affiliate_url).to_s.strip
+
+    return redirect_to(product_path(product), alert: "Affiliate URL can't be blank.") if url.blank?
+
+    product.update!(affiliate_url: url)
+
+    # Re-point the existing short links to the new affiliate URL too
+    ShortLink.where(linkable: product).update_all(destination_url: url)
+
+    redirect_to product_path(product), notice: "Affiliate URL saved. Short links updated."
+  end
+
   # PATCH /products/:id/select_angle?platform=tg&tone=witty
   def select_angle
     product = Product.find(params[:id])

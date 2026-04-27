@@ -2,23 +2,6 @@
 <% content_for :title, "Earnings" %>
 <% @crumbs = ["alfi", "Earnings"] %>
 
-<%
-  reconcile_rows = [
-    [ "Apr 03 14:22", "TMU-A8201", "Magnetic Cable Holder 6pk silicone",  0.31, "Magnetic Cable Organizer · pin · practical", 96 ],
-    [ "Apr 09 09:10", "TMU-A8419", "Cable Mgmt Clips set of six",          0.28, "Magnetic Cable Organizer · tg · witty",      88 ],
-    [ "Apr 12 18:45", "TMU-A8702", "Foldable Hair Dryer Travel 1200W",     0.42, "Foldable Travel Hairdryer · pin · premium",  91 ],
-    [ "Apr 15 11:02", "TMU-A8841", "LED Light Strip RGB 32",               0.18, "LED Strip Lights · ?",                       64 ],
-    [ "Apr 18 22:30", "TMU-A9012", "unknown sku 2841299",                  0.22, "— no confident match",                        0 ]
-  ]
-
-  statements = [
-    [ "April 2026",     "Apr 27", 257, 1284.42, 1281.97, 2.45,  "In progress" ],
-    [ "March 2026",     "Apr 02", 312, 1481.10, 1481.10, 0.00,  "Reconciled" ],
-    [ "February 2026",  "Mar 03", 198,  824.60,  824.60, 0.00,  "Reconciled" ],
-    [ "January 2026",   "Feb 02",  96,  380.20,  380.20, 0.00,  "Reconciled" ]
-  ]
-%>
-
 <div class="page">
   <div class="spread" style="margin-bottom:20px">
     <div>
@@ -26,117 +9,171 @@
       <div class="section-sub">Match Temu's monthly CSV against your tracked clicks. Catch the orphans.</div>
     </div>
     <div class="row" style="gap:8px">
-      <button class="btn"><%= icon :upload, size: 13 %> Upload CSV</button>
-      <button class="btn primary"><%= icon :bolt, size: 13 %> Auto-match</button>
+      <%= form_with url: import_earnings_path, multipart: true, class: "row", style: "gap:8px" do |f| %>
+        <%= f.text_field :period, value: Date.current.strftime("%Y-%m"),
+              class: "input mono", style: "width:110px;padding:6px 10px",
+              placeholder: "2026-04", pattern: "\\d{4}-\\d{2}", required: true %>
+        <%= f.file_field :csv_file, accept: ".csv", required: true,
+              class: "btn", style: "padding:5px 10px;font-size:12px" %>
+        <%= f.submit "Upload CSV", class: "btn primary", style: "padding:6px 12px;font-weight:600" %>
+      <% end %>
+      <%= button_to "Auto-match", "#", class: "btn", style: "padding:6px 12px", disabled: true,
+            title: "Runs automatically after upload" %>
     </div>
   </div>
 
+  <% if flash[:alert] %>
+    <div class="card" style="padding:10px 14px;background:var(--neg-bg);color:var(--neg);font-size:12px;margin-bottom:16px;border-color:transparent">
+      <%= flash[:alert] %>
+    </div>
+  <% end %>
+  <% if flash[:notice] %>
+    <div class="card" style="padding:10px 14px;background:var(--pos-bg);color:var(--pos);font-size:12px;margin-bottom:16px;border-color:transparent">
+      <%= flash[:notice] %>
+    </div>
+  <% end %>
+
   <div class="kpi-row" style="margin-bottom:20px">
     <div class="kpi">
-      <div class="kpi-label">Reported · April</div>
-      <div class="kpi-value"><span class="unit">$</span>1,284.42</div>
-      <div class="kpi-delta up">CSV uploaded Apr 27</div>
+      <div class="kpi-label">Reported · <%= @current&.label || "—" %></div>
+      <div class="kpi-value"><span class="unit">$</span><%= number_with_delimiter('%.2f' % (@kpi_reported_cents / 100.0)) %></div>
+      <div class="kpi-delta up"><%= @current ? "CSV uploaded #{@current.uploaded_at&.strftime('%b %-d')}" : "no statement uploaded" %></div>
     </div>
     <div class="kpi">
       <div class="kpi-label">Auto-matched</div>
-      <div class="kpi-value">94.2<span class="unit" style="margin-left:2px;margin-right:0">%</span></div>
-      <div class="kpi-delta up">242 of 257 rows</div>
+      <div class="kpi-value"><%= '%.1f' % @kpi_match_rate %><span class="unit" style="margin-left:2px;margin-right:0">%</span></div>
+      <div class="kpi-delta up"><%= @current ? "#{@current.matched_count} of #{@current.rows_count} rows" : "—" %></div>
     </div>
     <div class="kpi">
       <div class="kpi-label">Needs review</div>
-      <div class="kpi-value" style="color:var(--accent-fg)">15</div>
-      <div class="kpi-delta" style="color:var(--accent-fg)">orphan rows</div>
+      <div class="kpi-value" style="color:<%= @kpi_needs_review.zero? ? 'var(--ink-3)' : 'var(--accent-fg)' %>"><%= @kpi_needs_review %></div>
+      <div class="kpi-delta" style="color:var(--accent-fg)"><%= @kpi_needs_review.zero? ? "all reconciled" : "orphan rows" %></div>
     </div>
     <div class="kpi">
       <div class="kpi-label">Variance</div>
-      <div class="kpi-value"><span class="unit">$</span>2.40</div>
+      <div class="kpi-value"><span class="unit">$</span><%= '%.2f' % (@kpi_variance_cents / 100.0) %></div>
       <div class="kpi-delta" style="color:var(--ink-3)">vs. tracker</div>
     </div>
   </div>
 
-  <div class="card" style="padding:0;margin-bottom:20px">
-    <div class="card-head">
-      <div class="card-title">Reconciliation queue</div>
-      <span class="card-sub" style="margin-left:8px">15 unmatched rows · earliest Apr 03</span>
-      <div style="flex:1"></div>
-      <button class="btn sm ghost"><%= icon :filter, size: 11 %> Filter</button>
+  <% if @statements.empty? %>
+    <div class="card" style="padding:32px;text-align:center;color:var(--ink-3)">
+      <div class="eyebrow" style="margin-bottom:8px">No statements yet</div>
+      <div style="font-size:13px">
+        Upload a Temu commission CSV using the button above. We'll parse it, store every row, and try to match each commission to one of your published posts.
+      </div>
     </div>
-    <table class="tbl">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Order ID (Temu)</th>
-          <th>Product (CSV)</th>
-          <th class="r">Commission</th>
-          <th>Suggested match</th>
-          <th style="width:160px"></th>
-        </tr>
-      </thead>
-      <tbody>
-        <% reconcile_rows.each do |r| %>
-          <tr>
-            <td class="mono" style="font-size:11px;color:var(--ink-3)"><%= r[0] %></td>
-            <td class="mono" style="font-size:11px;color:var(--ink-2)"><%= r[1] %></td>
-            <td style="color:var(--ink);font-size:12px"><%= r[2] %></td>
-            <td class="num r" style="color:var(--pos);font-weight:600"><%= usd r[3] %></td>
-            <td>
-              <div style="font-size:12px;color: <%= r[5].positive? ? 'var(--ink)' : 'var(--ink-3)' %>"><%= r[4] %></div>
-              <% if r[5].positive? %>
-                <div class="row" style="gap:4px;margin-top:3px">
-                  <div style="width:50px;height:3px;background:var(--bg-3);border-radius:2px">
-                    <div style="width:<%= r[5] %>%;height:100%;background: <%= r[5] >= 80 ? 'var(--pos)' : 'var(--accent)' %>;border-radius:2px"></div>
+  <% else %>
+    <%# Reconciliation queue %>
+    <div class="card" style="padding:0;margin-bottom:20px">
+      <div class="card-head">
+        <div class="card-title">Reconciliation queue · <%= @current.label %></div>
+        <span class="card-sub" style="margin-left:8px"><%= @kpi_needs_review %> rows · earliest <%= @reconcile_queue.first&.occurred_at&.strftime('%b %-d') || '—' %></span>
+      </div>
+      <% if @reconcile_queue.any? %>
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Order ID (Temu)</th>
+              <th>Product (CSV)</th>
+              <th class="r">Commission</th>
+              <th>Suggested match</th>
+              <th style="width:100px"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @reconcile_queue.each do |row| %>
+              <% confidence = row.match_confidence %>
+              <% suggested = row.post %>
+              <tr>
+                <td class="mono" style="font-size:11px;color:var(--ink-3)">
+                  <%= row.occurred_at&.strftime("%b %-d %H:%M") || "—" %>
+                </td>
+                <td class="mono" style="font-size:11px;color:var(--ink-2)">
+                  <%= truncate(row.external_order_id || "—", length: 14) %>
+                </td>
+                <td style="color:var(--ink);font-size:12px">
+                  <%= truncate(row.raw_product_label || "—", length: 40) %>
+                </td>
+                <td class="num r" style="color:var(--pos);font-weight:600">
+                  $<%= '%.2f' % ((row.commission_cents || 0) / 100.0) %>
+                </td>
+                <td>
+                  <% if suggested %>
+                    <div style="font-size:12px;color:var(--ink)"><%= truncate(suggested.content_angle.product.title, length: 32) %></div>
+                    <div class="row" style="gap:4px;margin-top:3px">
+                      <div style="width:50px;height:3px;background:var(--bg-3);border-radius:2px">
+                        <div style="width:<%= confidence %>%;height:100%;background: <%= confidence >= 80 ? 'var(--pos)' : 'var(--accent)' %>;border-radius:2px"></div>
+                      </div>
+                      <span class="mono" style="font-size:10px;color:var(--ink-3)"><%= confidence %>% match</span>
+                    </div>
+                  <% else %>
+                    <div style="font-size:12px;color:var(--ink-3)">— no confident match</div>
+                  <% end %>
+                </td>
+                <td>
+                  <div class="row" style="gap:4px;justify-content:flex-end">
+                    <% if confidence >= 80 %>
+                      <span class="tag live"><span class="dot"></span>Auto-matched</span>
+                    <% else %>
+                      <button class="btn sm" style="padding:3px 8px">Manual</button>
+                    <% end %>
                   </div>
-                  <span class="mono" style="font-size:10px;color:var(--ink-3)"><%= r[5] %>% match</span>
-                </div>
-              <% end %>
-            </td>
-            <td>
-              <div class="row" style="gap:4px;justify-content:flex-end">
-                <% if r[5] >= 80 %>
-                  <button class="btn sm primary" style="padding:3px 8px">
-                    <%= icon :check, size: 10, stroke: 2.5 %> Confirm
-                  </button>
-                <% else %>
-                  <button class="btn sm" style="padding:3px 8px">Manual link</button>
-                <% end %>
-                <button class="btn sm ghost" style="padding:3px 6px"><%= icon :x, size: 11 %></button>
-              </div>
-            </td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <div style="padding:24px;text-align:center;color:var(--pos);font-size:13px">
+          <%= icon :check, size: 14, stroke: 2.5, style: "vertical-align:-2px;margin-right:4px" %>
+          Everything reconciled.
+        </div>
+      <% end %>
+    </div>
 
-  <div class="card" style="padding:0">
-    <div class="card-head"><div class="card-title">Monthly statements</div></div>
-    <table class="tbl">
-      <thead>
-        <tr>
-          <th>Month</th>
-          <th>CSV uploaded</th>
-          <th>Rows</th>
-          <th class="r">Reported</th>
-          <th class="r">Tracker</th>
-          <th class="r">Variance</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% statements.each_with_index do |r, i| %>
+    <%# Monthly statements %>
+    <div class="card" style="padding:0">
+      <div class="card-head"><div class="card-title">Monthly statements</div></div>
+      <table class="tbl">
+        <thead>
           <tr>
-            <td class="serif" style="font-style:normal;font-size:16px;color:var(--ink)"><%= r[0] %></td>
-            <td class="mono" style="font-size:11px;color:var(--ink-3)"><%= r[1] %></td>
-            <td class="mono"><%= r[2] %></td>
-            <td class="num r" style="color:var(--ink)"><%= usd r[3] %></td>
-            <td class="num r"><%= usd r[4] %></td>
-            <td class="num r" style="color: <%= r[5].zero? ? 'var(--ink-3)' : 'var(--accent-fg)' %>">
-              <%= r[5].zero? ? "—" : "+#{usd(r[5])}" %>
-            </td>
-            <td><%= status_tag(i.zero? ? :scheduled : :live, label: r[6]) %></td>
+            <th>Month</th>
+            <th>CSV uploaded</th>
+            <th>Rows</th>
+            <th class="r">Reported</th>
+            <th class="r">Matched</th>
+            <th class="r">Variance</th>
+            <th>Status</th>
           </tr>
-        <% end %>
-      </tbody>
-    </table>
-  </div>
+        </thead>
+        <tbody>
+          <% @statements.each do |s| %>
+            <tr>
+              <td class="serif" style="font-style:normal;font-size:16px;color:var(--ink)"><%= s.label %></td>
+              <td class="mono" style="font-size:11px;color:var(--ink-3)"><%= s.uploaded_at&.strftime('%b %-d') || '—' %></td>
+              <td class="mono"><%= s.rows_count %></td>
+              <td class="num r" style="color:var(--ink)">$<%= '%.2f' % ((s.total_reported_cents || 0) / 100.0) %></td>
+              <td class="num r" style="color:var(--ink-2)"><%= s.matched_count %> / <%= s.rows_count %></td>
+              <td class="num r" style="color: <%= s.variance_cents.zero? ? 'var(--ink-3)' : 'var(--accent-fg)' %>">
+                <%= s.variance_cents.zero? ? "—" : "$#{'%.2f' % (s.variance_cents.abs / 100.0)}" %>
+              </td>
+              <td>
+                <% if s.reconciled? %>
+                  <span class="tag live"><span class="dot"></span>Reconciled</span>
+                <% elsif s.uploaded? %>
+                  <span class="tag scheduled">Pending match</span>
+                <% elsif s.processing? %>
+                  <span class="tag scheduled">Processing</span>
+                <% else %>
+                  <span class="tag warn">Errored</span>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
 </div>
