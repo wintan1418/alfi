@@ -4,6 +4,8 @@
 
 <%
   filter = params[:status].presence
+  view   = params[:view] == "grid" ? "grid" : "list"
+
   filtered = filter ? @products.where(status: filter) : @products
 
   filter_tabs = [
@@ -34,7 +36,9 @@
       <%= link_to bulk_affiliates_products_path, class: "btn" do %>
         <%= icon :link, size: 13 %> Bulk affiliate URLs
       <% end %>
-      <button class="btn"><%= icon :upload, size: 13 %> Import CSV</button>
+      <%= link_to earnings_path, class: "btn" do %>
+        <%= icon :upload, size: 13 %> Import CSV
+      <% end %>
       <%= link_to new_product_path, class: "btn accent" do %>
         <%= icon :plus, size: 13, stroke: 2.2 %> Add product
       <% end %>
@@ -45,7 +49,7 @@
     <% filter_tabs.each do |t| %>
       <% is_active = filter == t[:id] %>
       <%= link_to(
-            (t[:id] ? products_path(status: t[:id]) : products_path),
+            (t[:id] ? products_path(status: t[:id], view: params[:view]) : products_path(view: params[:view])),
             class: "btn sm",
             style: ("background:var(--ink);color:var(--bg);border-color:var(--ink)" if is_active)
           ) do %>
@@ -54,13 +58,66 @@
       <% end %>
     <% end %>
     <div style="flex:1"></div>
-    <button class="btn sm ghost"><%= icon :filter, size: 11 %> Filters</button>
-    <button class="btn sm ghost"><%= icon :grid, size: 11 %> Grid</button>
-  </div>
-
-  <div class="card" style="padding:0">
-    <% filtered.each_with_index do |p, i| %>
-      <%= render "shared/product_row", product: p, first: i.zero? %>
+    <%# View toggle: list vs grid %>
+    <%= link_to products_path(status: filter, view: "list"),
+          class: "btn sm" + (view == "list" ? "" : " ghost") do %>
+      <%= icon :list, size: 11 %> List
+    <% end %>
+    <%= link_to products_path(status: filter, view: "grid"),
+          class: "btn sm" + (view == "grid" ? "" : " ghost") do %>
+      <%= icon :grid, size: 11 %> Grid
     <% end %>
   </div>
+
+  <% if view == "grid" %>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));gap:16px">
+      <% filtered.each do |p| %>
+        <%= link_to product_path(p), class: "card", style: "padding:0;text-decoration:none;color:inherit;display:block" do %>
+          <% if p.display_image_url.present? %>
+            <img src="<%= p.display_image_url %>" alt=""
+                 style="width:100%;aspect-ratio:1;object-fit:cover;display:block;background:var(--bg-3)">
+          <% else %>
+            <div class="ph-img" style="aspect-ratio:1">photo</div>
+          <% end %>
+          <div style="padding:12px">
+            <div class="row" style="gap:6px;margin-bottom:6px">
+              <span class="mono" style="font-size:10px;color:var(--ink-3)"><%= p.legacy_id %></span>
+              <% if p.flagged? %><%= icon :bolt, size: 11, stroke: 2.2, style: "color:var(--accent)" %><% end %>
+              <div style="flex:1"></div>
+              <%= status_tag p.status %>
+            </div>
+            <div style="font-size:13px;color:var(--ink);font-weight:500;line-height:1.4;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">
+              <%= p.title %>
+            </div>
+            <div class="row" style="gap:10px;font-size:11px">
+              <span class="mono" style="color:var(--ink)"><%= p.formatted_price %></span>
+              <span class="muted">·</span>
+              <span class="mono" style="color:var(--ink-3)"><%= mono_n p.click_count %> clicks</span>
+              <div style="flex:1"></div>
+              <span class="mono" style="color: <%= p.earned_amount > 0 ? 'var(--pos)' : 'var(--ink-3)' %>;font-weight:600">
+                <%= usd p.earned_amount %>
+              </span>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+
+    <% if filtered.empty? %>
+      <div class="card" style="padding:40px;text-align:center;color:var(--ink-3);font-size:13px">
+        No products match this filter.
+      </div>
+    <% end %>
+  <% else %>
+    <div class="card" style="padding:0">
+      <% filtered.each_with_index do |p, i| %>
+        <%= render "shared/product_row", product: p, first: i.zero? %>
+      <% end %>
+      <% if filtered.empty? %>
+        <div style="padding:40px;text-align:center;color:var(--ink-3);font-size:13px">
+          No products match this filter.
+        </div>
+      <% end %>
+    </div>
+  <% end %>
 </div>

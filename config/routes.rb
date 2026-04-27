@@ -33,8 +33,11 @@ Rails.application.routes.draw do
   get "calendar",  to: "calendar#show",  as: :calendar
   get "analytics", to: "analytics#show", as: :analytics
   get "earnings",  to: "earnings#show",  as: :earnings
-  post "earnings/import", to: "earnings#import", as: :import_earnings
+  post "earnings/import",  to: "earnings#import",  as: :import_earnings
+  post "earnings/rematch", to: "earnings#rematch", as: :rematch_earnings
   get "links",     to: "links#index",    as: :links
+  get "links/new", to: "links#new",      as: :new_link
+  post "links",    to: "links#create"
   get "prompts",   to: "prompts#show",   as: :prompts
   get "settings",  to: "settings#show",  as: :settings
   patch "settings", to: "settings#update"

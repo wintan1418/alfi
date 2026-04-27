@@ -34,6 +34,22 @@ class EarningsController < ApplicationController
     redirect_to earnings_path, alert: "Import failed: #{e.message}"
   end
 
+  # POST /earnings/rematch — re-run the matcher on the current statement.
+  # Useful after you've published more posts since the CSV upload — those new
+  # posts become candidates for previously-unmatched rows.
+  def rematch
+    statement = params[:statement_id].present? ? Statement.find(params[:statement_id]) : Statement.order(period: :desc).first
+    return redirect_to(earnings_path, alert: "No statement to rematch.") unless statement
+
+    # Reset suggested/unmatched rows; keep confirmed ones intact
+    statement.statement_rows.where(status: %i[unmatched suggested]).update_all(
+      status: 0, post_id: nil, short_link_id: nil, match_confidence: 0
+    )
+    matched = Earnings::AutoMatcher.new(statement).run!
+
+    redirect_to earnings_path, notice: "Re-matched · #{matched} new suggestions."
+  end
+
   private
 
   def nav_counts

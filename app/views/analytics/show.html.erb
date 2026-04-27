@@ -3,86 +3,99 @@
 <% @crumbs = ["alfi", "Analytics"] %>
 
 <%
-  days = 27
-  big_data = (0...days).map { |i| 30 + Math.sin(i * 0.4) * 18 + (rand * 22) + i * 0.6 }
-  big_max = big_data.max
-  w = 1100
-  h = 200
-
-  best_hours = [["6am", 12], ["9am", 38], ["12pm", 64], ["3pm", 52], ["6pm", 88], ["9pm", 71]]
-  best_max = best_hours.map { |_, v| v }.max
-
-  heatmap = [
-    [ "Telegram",   "tg",  [ 142, 89,  312 ] ],
-    [ "Pinterest",  "pin", [ 486, 240, 204 ] ],
-    [ "X / Twitter","x",   [  88, 64, 158 ] ],
-    [ "TikTok",     "tt",  [  22, 18,  42 ] ],
-    [ "Instagram",  "ig",  [  12, 14,   8 ] ]
+  short_full = { "tg" => "Telegram", "pin" => "Pinterest", "x" => "X / Twitter", "tt" => "TikTok", "ig" => "Instagram" }
+  platforms_for_heatmap = [
+    [ "Telegram",     "telegram",  "tg"  ],
+    [ "Pinterest",    "pinterest", "pin" ],
+    [ "X / Twitter",  "x",         "x"   ],
+    [ "TikTok",       "tiktok",    "tt"  ],
+    [ "Instagram",    "instagram", "ig"  ]
   ]
-  heatmap_max = 486
+  tones = %w[practical premium witty]
 
-  top_angles = [
-    [ "Magnetic Cable Organizer", "pin", "practical", "12,840", 612, "4.77%", "$0.79", 486.20 ],
-    [ "Magnetic Cable Organizer", "tg",  "witty",     "8,210",  312, "3.80%", "$0.92", 287.04 ],
-    [ "Adjustable Laptop Stand",  "pin", "premium",   "9,420",  240, "2.55%", "$0.88", 211.20 ],
-    [ "Self-Stirring Mug",        "tg",  "witty",     "5,180",  198, "3.82%", "$0.71", 140.58 ],
-    [ "Foldable Hairdryer",       "x",   "witty",     "14,200", 158, "1.11%", "$0.62",  97.96 ]
-  ]
-
-  big_path_d = "M0,#{h} " + big_data.each_with_index.map { |v, i| "L#{((i.to_f / (days - 1)) * w).round(1)},#{(h - (v / big_max) * h * 0.85).round(1)}" }.join(" ") + " L#{w},#{h} Z"
-  line_d     = "M0,#{(h - (big_data[0] / big_max) * h * 0.85).round(1)} " + big_data.each_with_index.map { |v, i| "L#{((i.to_f / (days - 1)) * w).round(1)},#{(h - (v / big_max) * h * 0.85).round(1)}" }.join(" ")
+  # SVG geometry for daily chart
+  data = @daily
+  max  = [ data.max || 0, 1 ].max
+  w, h = 1100, 200
+  points = data.each_with_index.map { |v, i|
+    x = (i.to_f / [ data.size - 1, 1 ].max) * w
+    y = h - (v.to_f / max) * h * 0.85
+    [ x, y ]
+  }
+  area_d = "M0,#{h} " + points.map { |x, y| "L#{x.round(1)},#{y.round(1)}" }.join(" ") + " L#{w},#{h} Z"
+  line_d = "M#{points.first[0].round(1)},#{points.first[1].round(1)} " + points[1..].map { |x, y| "L#{x.round(1)},#{y.round(1)}" }.join(" ") if points.any?
 %>
 
 <div class="page">
   <div class="spread" style="margin-bottom:20px">
     <div>
       <h1 class="section-h">Analytics</h1>
-      <div class="section-sub">Attribution from <em class="serif">angle</em> → <em class="serif">click</em> → <em class="serif">earning</em>. April 1 — Apr 27.</div>
+      <div class="section-sub">
+        Attribution from <em class="serif">angle</em> → <em class="serif">click</em> → <em class="serif">earning</em>.
+        <%= @range_start.strftime("%b %-d") %> — <%= @range_end.strftime("%b %-d") %>.
+      </div>
     </div>
     <div class="row" style="gap:8px">
-      <button class="btn sm">Last 30 days <%= icon :chev_down, size: 11 %></button>
+      <button class="btn sm">Last 28 days <%= icon :chev_down, size: 11 %></button>
       <button class="btn sm ghost"><%= icon :upload, size: 11 %> Export</button>
     </div>
   </div>
 
-  <%# Daily earnings line chart %>
+  <%# Daily clicks line chart %>
   <div class="card" style="padding:20px;margin-bottom:20px">
-    <div class="card-title" style="margin-bottom:4px">Earnings · daily</div>
-    <div class="card-sub" style="margin-bottom:16px">$1,284.42 · +18.4% vs prior period</div>
-    <svg width="100%" viewBox="0 0 <%= w %> <%= h + 30 %>" style="display:block">
-      <% [0, 0.25, 0.5, 0.75, 1].each do |p| %>
-        <line x1="0" x2="<%= w %>" y1="<%= h * p %>" y2="<%= h * p %>" stroke="var(--line)" stroke-dasharray="2 4"></line>
-      <% end %>
-      <path d="<%= big_path_d %>" fill="var(--accent-bg)"></path>
-      <path d="<%= line_d %>" stroke="var(--accent)" stroke-width="2" fill="none"></path>
-      <% big_data.each_with_index do |v, i| %>
-        <circle cx="<%= ((i.to_f / (days - 1)) * w).round(1) %>" cy="<%= (h - (v / big_max) * h * 0.85).round(1) %>" r="2" fill="var(--accent)"></circle>
-      <% end %>
-      <% [1, 7, 14, 21, 27].each do |d| %>
-        <text x="<%= (((d - 1).to_f / (days - 1)) * w).round(1) %>" y="<%= h + 20 %>" fill="var(--ink-3)" font-size="10" font-family="var(--font-mono)" text-anchor="middle">Apr <%= d %></text>
-      <% end %>
-    </svg>
+    <div class="card-title" style="margin-bottom:4px">Clicks · daily</div>
+    <div class="card-sub" style="margin-bottom:16px">
+      <%= mono_n @kpi_total_clicks %> human clicks · <%= mono_n(ClickEvent.bots.count) %> bots filtered
+    </div>
+    <% if data.compact.sum.zero? %>
+      <div style="padding:40px;text-align:center;color:var(--ink-3);font-size:13px">
+        No click data in this window yet. Once posts go live and start getting clicks, this chart fills in.
+      </div>
+    <% else %>
+      <svg width="100%" viewBox="0 0 <%= w %> <%= h + 30 %>" style="display:block">
+        <% [0, 0.25, 0.5, 0.75, 1].each do |p| %>
+          <line x1="0" x2="<%= w %>" y1="<%= h * p %>" y2="<%= h * p %>" stroke="var(--line)" stroke-dasharray="2 4"></line>
+        <% end %>
+        <path d="<%= area_d %>" fill="var(--accent-bg)"></path>
+        <% if line_d %><path d="<%= line_d %>" stroke="var(--accent)" stroke-width="2" fill="none"></path><% end %>
+        <% points.each do |x, y| %>
+          <circle cx="<%= x.round(1) %>" cy="<%= y.round(1) %>" r="2" fill="var(--accent)"></circle>
+        <% end %>
+        <% [0, 7, 14, 21, data.size - 1].uniq.each do |idx| %>
+          <% next if idx >= data.size %>
+          <% date = @range_start + idx.days %>
+          <text x="<%= ((idx.to_f / [data.size - 1, 1].max) * w).round(1) %>" y="<%= h + 20 %>"
+                fill="var(--ink-3)" font-size="10" font-family="var(--font-mono)" text-anchor="middle">
+            <%= date.strftime("%b %-d") %>
+          </text>
+        <% end %>
+      </svg>
+    <% end %>
   </div>
 
   <%# Heatmap + best time %>
   <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:20px;margin-bottom:20px">
+    <%# Tone × Platform heatmap %>
     <div class="card" style="padding:0">
-      <div class="card-head"><div class="card-title">Tone × Platform — earnings heatmap</div></div>
+      <div class="card-head"><div class="card-title">Tone × Platform — clicks</div></div>
       <div style="padding:18px">
         <div style="display:grid;grid-template-columns:90px repeat(3, 1fr);gap:6px">
           <div></div>
           <% %w[Practical Premium Witty].each do |t| %>
             <div class="eyebrow" style="text-align:center"><%= t %></div>
           <% end %>
-          <% heatmap.each do |name, key, vals| %>
-            <div class="row" style="gap:6px"><%= platform_pill key %></div>
-            <% vals.each do |v| %>
-              <% intensity = v.to_f / heatmap_max %>
+          <% platforms_for_heatmap.each do |name, full, short_key| %>
+            <div class="row" style="gap:6px"><%= platform_pill short_key %></div>
+            <% tones.each do |tone| %>
+              <% v = @heatmap[[ full, tone ]] || 0 %>
+              <% intensity = v.to_f / @heatmap_max %>
               <% pct = (8 + intensity * 80).round %>
               <div style="
                 background: color-mix(in oklch, var(--accent) <%= pct %>%, transparent);
                 padding:10px 6px;border-radius:4px;text-align:center">
-                <div class="mono" style="font-size:13px;font-weight:600;color: <%= intensity > 0.4 ? 'oklch(0.2 0.05 60)' : 'var(--ink)' %>">$<%= v %></div>
+                <div class="mono" style="font-size:13px;font-weight:600;color: <%= intensity > 0.4 ? 'oklch(0.2 0.05 60)' : 'var(--ink)' %>">
+                  <%= mono_n v %>
+                </div>
               </div>
             <% end %>
           <% end %>
@@ -92,70 +105,93 @@
           <div style="flex:1;height:6px;background:linear-gradient(to right, color-mix(in oklch, var(--accent) 8%, transparent), var(--accent));border-radius:3px"></div>
           <span class="mono">Higher</span>
         </div>
-        <div style="margin-top:16px;padding:12px;background:var(--accent-bg);border-radius:6px;font-size:12px;color:var(--accent-fg)">
-          <strong style="font-family:var(--font-serif);font-style:italic;font-size:14px">Insight:</strong>
-          Practical-tone Pinterest pins drive 38% of total earnings. Witty Telegram is the runner-up.
-        </div>
+        <% best = @heatmap.max_by { |_, v| v } %>
+        <% if best && best.last.positive? %>
+          <% best_platform_full = best.first.first %>
+          <% best_tone = best.first.last %>
+          <div style="margin-top:16px;padding:12px;background:var(--accent-bg);border-radius:6px;font-size:12px;color:var(--accent-fg)">
+            <strong style="font-family:var(--font-serif);font-style:italic;font-size:14px">Insight:</strong>
+            <%= best_tone.titleize %>-tone <%= best_platform_full.titleize %> is your top combo with <%= mono_n best.last %> clicks.
+          </div>
+        <% else %>
+          <div style="margin-top:16px;padding:12px;background:var(--bg-2);border-radius:6px;font-size:12px;color:var(--ink-3);font-style:italic">
+            Not enough data yet. Ship a few posts and this will populate.
+          </div>
+        <% end %>
       </div>
     </div>
 
+    <%# Best time to post %>
     <div class="card" style="padding:0">
       <div class="card-head"><div class="card-title">Best time to post</div></div>
       <div style="padding:18px">
-        <div class="col" style="gap:8px">
-          <% best_hours.each_with_index do |(h_lbl, v), i| %>
-            <div class="row" style="gap:10px">
-              <span class="mono" style="font-size:11px;color:var(--ink-3);width:40px"><%= h_lbl %></span>
-              <div style="flex:1;height:18px;background:var(--bg-3);border-radius:3px;overflow:hidden">
-                <div style="
-                  width: <%= (v.to_f / best_max * 100).round %>%; height:100%;
-                  background: <%= i == 4 ? 'var(--accent)' : 'var(--ink-2)' %>;
-                  display:flex;align-items:center;justify-content:flex-end;padding:0 6px;
-                  color: <%= i == 4 ? 'oklch(0.2 0.05 60)' : 'var(--bg)' %>;
-                  font-family:var(--font-mono);font-size:10px;font-weight:600">$<%= v %></div>
-              </div>
-            </div>
-          <% end %>
-          <div style="margin-top:6px;padding:10px;background:var(--accent-bg);border-radius:6px;font-size:12px;color:var(--accent-fg)">
-            <strong>6pm window</strong> averages 33% higher EPC. Schedule recommendations bias toward this slot.
+        <% if @best_time.map(&:last).sum.zero? %>
+          <div style="padding:24px 0;text-align:center;color:var(--ink-3);font-size:13px">
+            Need clicks across the day before this kicks in.
           </div>
-        </div>
+        <% else %>
+          <% peak_idx = @best_time.each_with_index.max_by { |(_, v), _| v }.last %>
+          <div class="col" style="gap:8px">
+            <% @best_time.each_with_index do |(label, v), i| %>
+              <div class="row" style="gap:10px">
+                <span class="mono" style="font-size:11px;color:var(--ink-3);width:40px"><%= label %></span>
+                <div style="flex:1;height:18px;background:var(--bg-3);border-radius:3px;overflow:hidden">
+                  <div style="
+                    width: <%= (v.to_f / @best_time_max * 100).round %>%; height:100%;
+                    background: <%= i == peak_idx ? 'var(--accent)' : 'var(--ink-2)' %>;
+                    display:flex;align-items:center;justify-content:flex-end;padding:0 6px;
+                    color: <%= i == peak_idx ? 'oklch(0.2 0.05 60)' : 'var(--bg)' %>;
+                    font-family:var(--font-mono);font-size:10px;font-weight:600"><%= v %></div>
+                </div>
+              </div>
+            <% end %>
+            <div style="margin-top:6px;padding:10px;background:var(--accent-bg);border-radius:6px;font-size:12px;color:var(--accent-fg)">
+              <strong><%= @best_time[peak_idx].first %> window</strong> is your peak with <%= @best_time[peak_idx].last %> clicks.
+            </div>
+          </div>
+        <% end %>
       </div>
     </div>
   </div>
 
-  <%# Top angles table %>
+  <%# Top angles %>
   <div class="card" style="padding:0">
-    <div class="card-head"><div class="card-title">Top angles · MTD</div></div>
-    <table class="tbl">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Product</th>
-          <th>Platform</th>
-          <th>Tone</th>
-          <th class="r">Impressions</th>
-          <th class="r">Clicks</th>
-          <th class="r">CTR</th>
-          <th class="r">EPC</th>
-          <th class="r">Earned</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% top_angles.each_with_index do |r, i| %>
+    <div class="card-head"><div class="card-title">Top angles · last 28 days</div></div>
+    <% if @top_angles.empty? || @top_angles.all? { |a| a[:clicks].zero? } %>
+      <div style="padding:32px;text-align:center;color:var(--ink-3);font-size:13px">
+        No published posts with clicks yet. Once one of your angles starts pulling traffic, it shows up here.
+      </div>
+    <% else %>
+      <table class="tbl">
+        <thead>
           <tr>
-            <td class="mono" style="color:var(--ink-3);font-size:11px"><%= "%02d" % (i + 1) %></td>
-            <td style="color:var(--ink);font-weight:500;font-size:12px"><%= r[0] %></td>
-            <td><%= platform_pill r[1] %></td>
-            <td class="mono" style="font-size:11px"><%= r[2] %></td>
-            <td class="num r"><%= r[3] %></td>
-            <td class="num r" style="color:var(--ink)"><%= r[4] %></td>
-            <td class="num r"><%= r[5] %></td>
-            <td class="num r"><%= r[6] %></td>
-            <td class="num r" style="color:var(--pos);font-weight:600"><%= usd r[7] %></td>
+            <th>#</th>
+            <th>Product</th>
+            <th>Platform</th>
+            <th>Tone</th>
+            <th class="r">Impressions</th>
+            <th class="r">Clicks</th>
+            <th class="r">CTR</th>
+            <th class="r">EPC</th>
+            <th class="r">Earned</th>
           </tr>
-        <% end %>
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          <% @top_angles.each_with_index do |a, i| %>
+            <tr>
+              <td class="mono" style="color:var(--ink-3);font-size:11px"><%= "%02d" % (i + 1) %></td>
+              <td style="color:var(--ink);font-weight:500;font-size:12px"><%= a[:title] %></td>
+              <td><%= platform_pill a[:platform_short] %></td>
+              <td class="mono" style="font-size:11px"><%= a[:tone] %></td>
+              <td class="num r"><%= mono_n a[:impressions] %></td>
+              <td class="num r" style="color:var(--ink)"><%= a[:clicks] %></td>
+              <td class="num r"><%= a[:ctr] %></td>
+              <td class="num r"><%= a[:epc] %></td>
+              <td class="num r" style="color:var(--pos);font-weight:600">$<%= '%.2f' % a[:earned] %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
   </div>
 </div>
