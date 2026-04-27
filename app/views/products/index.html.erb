@@ -1,0 +1,63 @@
+<% content_for :active_nav, "products" %>
+<% content_for :title, "Products" %>
+<% @crumbs = ["alfi", "Products"] %>
+
+<%
+  filter = params[:status].presence
+  filtered = filter ? @products.where(status: filter) : @products
+
+  filter_tabs = [
+    { id: nil,         label: "All" },
+    { id: "live",      label: "Live" },
+    { id: "queued",    label: "Review queue" },
+    { id: "scheduled", label: "Scheduled" },
+    { id: "paused",    label: "Paused" }
+  ]
+  counts = {
+    nil        => @products.count,
+    "live"     => @products.where(status: :live).count,
+    "queued"   => @products.where(status: :queued).count,
+    "scheduled"=> @products.where(status: :scheduled).count,
+    "paused"   => @products.where(status: :paused).count
+  }
+%>
+
+<div class="page">
+  <div class="spread" style="margin-bottom:20px">
+    <div>
+      <h1 class="section-h">Products</h1>
+      <div class="section-sub">
+        <span class="mono"><%= @products.count %> total</span> · sorted by recently updated
+      </div>
+    </div>
+    <div class="row" style="gap:8px">
+      <button class="btn"><%= icon :upload, size: 13 %> Import CSV</button>
+      <%= link_to new_product_path, class: "btn accent" do %>
+        <%= icon :plus, size: 13, stroke: 2.2 %> Add product
+      <% end %>
+    </div>
+  </div>
+
+  <div class="row" style="gap:6px;margin-bottom:14px;flex-wrap:wrap">
+    <% filter_tabs.each do |t| %>
+      <% is_active = filter == t[:id] %>
+      <%= link_to(
+            (t[:id] ? products_path(status: t[:id]) : products_path),
+            class: "btn sm",
+            style: ("background:var(--ink);color:var(--bg);border-color:var(--ink)" if is_active)
+          ) do %>
+        <%= t[:label] %>
+        <span class="mono" style="font-size:10px;opacity:0.7;margin-left:4px"><%= counts[t[:id]] %></span>
+      <% end %>
+    <% end %>
+    <div style="flex:1"></div>
+    <button class="btn sm ghost"><%= icon :filter, size: 11 %> Filters</button>
+    <button class="btn sm ghost"><%= icon :grid, size: 11 %> Grid</button>
+  </div>
+
+  <div class="card" style="padding:0">
+    <% filtered.each_with_index do |p, i| %>
+      <%= render "shared/product_row", product: p, first: i.zero? %>
+    <% end %>
+  </div>
+</div>

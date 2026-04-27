@@ -1,0 +1,72 @@
+class ProductsController < ApplicationController
+  allow_unauthenticated_access
+
+  def index
+    @products = Product.order(updated_at: :desc)
+    @nav_counts = nav_counts
+  end
+
+  def new
+    @product = Product.new
+    @nav_counts = nav_counts
+  end
+
+  def create
+    @product = Product.new(product_params)
+    @product.title ||= "Imported from Temu (pending scrape)"
+    @product.status ||= :queued
+
+    if @product.save
+      # In dev with stubs, run the pipeline inline so the user sees immediate
+      # results. With real APIs, this would be too slow — go async.
+      if Rails.env.development? && stubs_only?
+        ProductIngestJob.perform_now(@product.id)
+      else
+        ProductIngestJob.perform_later(@product.id)
+      end
+      redirect_to product_path(@product)
+    else
+      @nav_counts = nav_counts
+      render :new, status: :unprocessable_entity
+    end
+  end
+
+  def show
+    @product = Product.find(params[:id])
+    @nav_counts = nav_counts
+  end
+
+  PLATFORM_SHORT = { "tg" => "telegram", "pin" => "pinterest", "x" => "x", "tt" => "tiktok", "ig" => "instagram" }.freeze
+
+  # PATCH /products/:id/select_angle?platform=tg&tone=witty
+  def select_angle
+    product = Product.find(params[:id])
+    short = params[:platform].to_s
+    platform = PLATFORM_SHORT[short] || short
+    tone = params[:tone].to_s
+
+    raise ActionController::BadRequest, "missing platform/tone" unless platform.present? && tone.present?
+
+    ContentAngle.transaction do
+      product.content_angles.where(platform: platform, status: :approved).update_all(status: 0)
+      angle = product.content_angles.find_by!(platform: platform, tone: tone)
+      angle.update!(status: :approved)
+    end
+
+    redirect_to product_path(product, anchor: "platform-#{short}")
+  end
+
+  private
+
+  def product_params
+    params.require(:product).permit(:title, :source_url, :affiliate_url, :price_cents, :currency, :description, :category)
+  end
+
+  def nav_counts
+    { products: Product.count, calendar: 23, inbox: 15 }
+  end
+
+  def stubs_only?
+    !Alfi::Live.apify? && !Alfi::Live.anthropic?
+  end
+end

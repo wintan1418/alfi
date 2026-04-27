@@ -1,0 +1,20 @@
+<%# locals: (product:, copy:, hashtags:) %>
+<div style="background:white;border-radius:8px;border:1px solid #eee;font-family:-apple-system">
+  <div class="row" style="padding:8px;gap:8px;border-bottom:1px solid #eee">
+    <div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(45deg, oklch(0.6 0.18 350), oklch(0.7 0.16 60))"></div>
+    <span style="font-size:11px;font-weight:600">alfifinds</span>
+  </div>
+  <% if product.display_image_url.present? %>
+    <img src="<%= product.display_image_url %>" alt=""
+         style="width:100%;height:130px;object-fit:cover;display:block">
+  <% else %>
+    <div class="ph-img" style="height:130px">square photo</div>
+  <% end %>
+  <div style="padding:10px">
+    <div class="row" style="gap:12px;font-size:14px;margin-bottom:6px">♡ 💬 ➤</div>
+    <div style="font-size:11px;color:#000;line-height:1.4">
+      <strong>alfifinds</strong> <%= copy %>
+    </div>
+    <div style="font-size:10px;color:#999;margin-top:4px"><%= hashtags %></div>
+  </div>
+</div>

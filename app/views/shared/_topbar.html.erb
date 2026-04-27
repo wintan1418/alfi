@@ -1,0 +1,23 @@
+<%# locals: (crumbs:) %>
+<div class="topbar">
+  <div class="topbar-crumbs">
+    <% Array(crumbs).each_with_index do |crumb, i| %>
+      <% if i > 0 %><span class="sep">/</span><% end %>
+      <span class="<%= 'here' if i == crumbs.length - 1 %>"><%= crumb %></span>
+    <% end %>
+  </div>
+  <div class="topbar-right">
+    <div class="row" style="gap:6px;padding:0 8px;border-left:1px solid var(--line);height:24px;margin-left:6px">
+      <%= icon :search, size: 13, style: "color:var(--ink-3)" %>
+      <span class="mono" style="font-size:11px;color:var(--ink-3)">Search</span>
+      <span class="kbd">⌘K</span>
+    </div>
+    <button class="icon-btn" data-controller="theme" data-action="click->theme#toggle" title="Toggle theme">
+      <% if cookies[:alfi_theme] == "dark" %>
+        <%= icon :sun, size: 14 %>
+      <% else %>
+        <%= icon :moon, size: 14 %>
+      <% end %>
+    </button>
+  </div>
+</div>

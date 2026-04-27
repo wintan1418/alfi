@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>alfi — affiliate automation</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <style>
+    html, body { margin: 0; height: 100%; background: oklch(0.94 0.005 80); font-family: 'Inter', system-ui, sans-serif; }
+    body { display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .browser-shell {
+      width: 100%; max-width: 1320px; height: 92vh; max-height: 880px;
+      background: var(--surface, white);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 30px 80px -20px rgba(20, 20, 20, 0.18), 0 6px 18px -6px rgba(20, 20, 20, 0.08);
+      display: flex; flex-direction: column;
+      border: 1px solid oklch(0.88 0.005 80);
+    }
+    .browser-bar {
+      display: flex; align-items: center; gap: 10px;
+      height: 38px; padding: 0 14px;
+      background: oklch(0.97 0.004 80);
+      border-bottom: 1px solid oklch(0.9 0.005 80);
+      flex-shrink: 0;
+    }
+    .traffic { display: flex; gap: 6px; }
+    .light { width: 11px; height: 11px; border-radius: 50%; }
+    .light.r { background: #ff5f57; }
+    .light.y { background: #febc2e; }
+    .light.g { background: #28c840; }
+    .url {
+      flex: 1; max-width: 420px; margin: 0 auto;
+      background: white; border: 1px solid oklch(0.9 0.005 80);
+      border-radius: 6px; padding: 4px 12px;
+      font-size: 12px; font-family: 'JetBrains Mono', monospace;
+      color: oklch(0.5 0.005 80);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .url::before { content: ''; width: 10px; height: 10px; border: 1.4px solid oklch(0.6 0.13 155); border-radius: 50%; border-bottom-color: transparent; transform: rotate(-45deg); }
+    .url b { color: oklch(0.22 0.005 80); font-weight: 500; font-family: inherit; }
+    .frame {
+      flex: 1; border: none; width: 100%;
+    }
+    .corner {
+      position: fixed; bottom: 16px; right: 20px;
+      font-family: 'JetBrains Mono', monospace; font-size: 11px;
+      color: oklch(0.5 0.005 80);
+      background: white; padding: 8px 12px; border-radius: 6px;
+      border: 1px solid oklch(0.9 0.005 80);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      display: flex; gap: 12px; align-items: center;
+    }
+    .corner a { color: oklch(0.22 0.005 80); text-decoration: none; font-weight: 500; }
+    .corner a:hover { color: oklch(0.7 0.16 60); }
+  </style>
+</head>
+<body>
+  <template id="__bundler_thumbnail">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+      <rect width="200" height="200" fill="#f5f1ea"/>
+      <rect x="50" y="50" width="100" height="100" rx="14" fill="#e8a04a"/>
+      <text x="100" y="128" font-family="Georgia, serif" font-style="italic" font-size="72" fill="#3a2410" text-anchor="middle">α</text>
+    </svg>
+  </template>
+  <div class="browser-shell">
+    <div class="browser-bar">
+      <div class="traffic">
+        <span class="light r"></span>
+        <span class="light y"></span>
+        <span class="light g"></span>
+      </div>
+      <div class="url">app.alfi.co<b>/dashboard</b></div>
+      <div style="width: 60px;"></div>
+    </div>
+    <iframe class="frame" src="app.html" title="alfi"></iframe>
+  </div>
+  <div class="corner">
+    <span style="font-style: italic; font-family: 'Instrument Serif', serif; font-size: 14px; color: oklch(0.7 0.16 60);">alfi</span>
+    <span style="opacity: 0.4;">|</span>
+    <a href="canvas.html">All screens →</a>
+  </div>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<%# locals: (product:, first: false) %>
+<%= link_to product_path(product), class: "product-row #{'first' if first}" do %>
+  <% if product.display_image_url.present? %>
+    <img src="<%= product.display_image_url %>" alt=""
+         style="width:52px;height:52px;border-radius:6px;object-fit:cover;background:var(--bg-3)">
+  <% else %>
+    <div class="ph-img" style="width:52px;height:52px;border-radius:6px">img</div>
+  <% end %>
+
+  <div style="min-width:0">
+    <div class="row" style="gap:6px;margin-bottom:3px">
+      <span style="color:var(--ink);font-size:13px;font-weight:500"><%= product.title %></span>
+      <% if product.flagged? %><%= icon :bolt, size: 11, stroke: 2.2, style: "color:var(--accent)" %><% end %>
+    </div>
+    <div class="row" style="gap:8px;font-size:11px">
+      <span class="mono" style="color:var(--ink-3)"><%= product.legacy_id %></span>
+      <span class="muted">·</span>
+      <span class="mono" style="color:var(--ink-3)"><%= product.formatted_price %></span>
+      <span class="muted">·</span>
+      <span class="mono" style="color:var(--ink-3)"><%= product.angle_count %> angles</span>
+    </div>
+  </div>
+
+  <div style="text-align:right">
+    <div class="mono" style="font-size:10px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em">Score</div>
+    <%= score_bar product.score %>
+  </div>
+
+  <div style="text-align:right;min-width:60px">
+    <div class="mono" style="font-size:10px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em">Clicks</div>
+    <div class="mono" style="color:var(--ink);font-size:13px"><%= mono_n product.click_count %></div>
+  </div>
+
+  <div style="text-align:right;min-width:70px">
+    <div class="mono" style="font-size:10px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em">Earned</div>
+    <div class="mono" style="font-size:13px;font-weight:600;color: <%= product.earned_amount > 0 ? 'var(--pos)' : 'var(--ink-3)' %>">
+      <%= usd product.earned_amount %>
+    </div>
+  </div>
+
+  <div><%= status_tag product.status %></div>
+<% end %>

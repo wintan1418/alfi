@@ -1,0 +1,360 @@
+<% content_for :active_nav, "products" %>
+<% content_for :title, @product.title %>
+<% @crumbs = ["alfi", "Products", @product.legacy_id] %>
+
+<%
+  tones = [
+    { id: "practical", label: "Practical", char: "P", desc: "Plainspoken. Use-case first. The \"this just works\" angle." },
+    { id: "premium",   label: "Premium",   char: "M", desc: "Aspirational. Lifestyle. The \"you deserve it\" angle." },
+    { id: "witty",     label: "Witty",     char: "W", desc: "Punchy. Conversational. The \"stop scrolling\" angle." }
+  ]
+
+  platforms = [
+    { id: "tg",  name: "Telegram",     status: "live",   key: :telegram  },
+    { id: "pin", name: "Pinterest",    status: "live",   key: :pinterest },
+    { id: "x",   name: "X / Twitter",  status: "live",   key: :x         },
+    { id: "tt",  name: "TikTok",       status: "assist", key: :tiktok    },
+    { id: "ig",  name: "Instagram",    status: "paused", key: :instagram }
+  ]
+
+  # Build { "tg" => { "practical" => ContentAngle, ... }, ... }
+  angles_by_pt = platforms.each_with_object({}) do |p, h|
+    rows = @product.content_angles.where(platform: p[:key])
+    h[p[:id]] = rows.index_by(&:tone)
+  end
+
+  # Selected = approved angles; default to design's prior choices when absent
+  approved = @product.content_angles.where(status: :approved).group_by { |a| a.platform }
+  selected = platforms.each_with_object({}) do |p, h|
+    a = approved[p[:key].to_s]&.first
+    h[p[:id]] = a&.tone
+  end
+
+  has_angles = @product.content_angles.exists?
+  angle_count = @product.content_angles.count
+%>
+
+<div data-controller="tabs" data-tabs-default-value="tg" style="display:grid;grid-template-columns:320px 1fr 300px;height:100%;overflow:hidden">
+
+  <%# LEFT — product info %>
+  <aside style="border-right:1px solid var(--line);overflow-y:auto;padding:24px;background:var(--bg-2)">
+    <%= link_to products_path, class: "btn ghost sm", style: "margin-bottom:16px;padding:4px 8px" do %>
+      <%= icon :chev, size: 11, style: "transform:rotate(180deg)" %> Products
+    <% end %>
+
+    <% if @product.display_image_url.present? %>
+      <img src="<%= @product.display_image_url %>" alt=""
+           style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;margin-bottom:14px;background:var(--bg-3)">
+    <% else %>
+      <div class="ph-img" style="width:100%;aspect-ratio:1;border-radius:10px;margin-bottom:14px">product photo</div>
+    <% end %>
+
+    <div class="eyebrow" style="margin-bottom:6px"><%= @product.legacy_id %> · imported <%= @product.discovered_on %></div>
+    <h2 class="serif" style="font-size:24px;margin:0 0 4px;line-height:1.15;font-style:normal"><%= @product.title %></h2>
+
+    <div class="row" style="gap:8px;margin-bottom:18px;font-size:13px">
+      <span class="mono" style="color:var(--ink)"><%= @product.formatted_price %></span>
+      <% if @product.formatted_margin %>
+        <span class="muted">·</span>
+        <span class="mono" style="color:var(--pos)"><%= @product.formatted_margin %> margin</span>
+      <% end %>
+    </div>
+
+    <div class="col" style="gap:10px;margin-bottom:20px">
+      <div class="spread" style="font-size:12px">
+        <span class="eyebrow">Score</span>
+        <span style="color:var(--ink);font-weight:500">
+          <span style="color: <%= @product.score >= 85 ? 'var(--pos)' : 'var(--accent)' %>"><%= @product.score %></span>
+          <span class="muted">/ 100</span>
+        </span>
+      </div>
+      <div class="spread" style="font-size:12px">
+        <span class="eyebrow">Total clicks</span>
+        <span style="color:var(--ink);font-weight:500"><%= mono_n @product.click_count %></span>
+      </div>
+      <div class="spread" style="font-size:12px">
+        <span class="eyebrow">Earned</span>
+        <span style="color:var(--pos);font-weight:500"><%= usd @product.earned_amount %></span>
+      </div>
+      <div class="spread" style="font-size:12px">
+        <span class="eyebrow">Live posts</span>
+        <span style="color:var(--ink);font-weight:500"><%= @product.post_count %></span>
+      </div>
+      <div class="spread" style="font-size:12px">
+        <span class="eyebrow">Angles generated</span>
+        <span style="color:var(--ink);font-weight:500"><%= angle_count %></span>
+      </div>
+    </div>
+
+    <div class="card" style="background:var(--surface);padding:12px;margin-bottom:12px">
+      <div class="eyebrow" style="margin-bottom:6px">Affiliate link</div>
+      <div class="mono" style="font-size:11px;color:var(--ink-2);word-break:break-all;margin-bottom:8px">
+        alfi.co/<span style="color:var(--accent-fg);background:var(--accent-bg);padding:0 3px;border-radius:3px"><%= @product.legacy_id.delete_prefix('P-').downcase %></span>
+      </div>
+      <div class="row" style="gap:4px">
+        <button class="btn sm ghost" style="padding:2px 6px"><%= icon :link, size: 10 %> Copy</button>
+        <button class="btn sm ghost" style="padding:2px 6px"><%= icon :eye, size: 10 %> Preview</button>
+      </div>
+    </div>
+
+    <div class="eyebrow" style="margin-bottom:8px">Source</div>
+    <div class="mono" style="font-size:11px;color:var(--ink-3);word-break:break-all">
+      <%= truncate(@product.source_url, length: 60) %>
+      <a href="<%= @product.source_url %>" target="_blank" rel="noopener" style="color:var(--info);margin-left:4px">open ↗</a>
+    </div>
+
+    <% if @product.note.present? %>
+      <div style="margin-top:18px;padding:10px;background:var(--accent-bg);border-radius:6px;font-size:12px;color:var(--accent-fg);font-style:italic">
+        <%= icon :bolt, size: 11, stroke: 2.2, style: "margin-right:4px;vertical-align:-2px" %>
+        <%= @product.note %>
+      </div>
+    <% end %>
+  </aside>
+
+  <%# CENTER — angle picker %>
+  <section style="overflow-y:auto;padding:20px 32px 60px">
+    <div class="spread" style="margin-bottom:4px">
+      <div>
+        <div class="eyebrow" style="margin-bottom:4px">Step 2 / 3 — Curate angles</div>
+        <h2 class="serif" style="font-size:28px;margin:0;font-style:normal">Pick the winning angle <em>per platform.</em></h2>
+      </div>
+      <button class="btn sm ghost"><%= icon :refresh, size: 11 %> Regenerate all</button>
+    </div>
+    <div style="font-size:13px;color:var(--ink-3);margin-bottom:22px">
+      <% if has_angles %>
+        <%= angle_count %> angles available · click a card to set it as the winner.
+      <% else %>
+        Angles haven't been generated yet — the pipeline is running in the background.
+      <% end %>
+    </div>
+
+    <% if has_angles %>
+      <%# Platform tabs %>
+      <div style="display:flex;border-bottom:1px solid var(--line);margin-bottom:22px;gap:0">
+        <% platforms.each do |p| %>
+          <button data-tabs-target="tab" data-key="<%= p[:id] %>" data-action="tabs#select"
+                  class="alfi-tab"
+                  style="padding:10px 16px;border:none;background:transparent;cursor:pointer;border-bottom:2px solid transparent;color:var(--ink-3);font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;margin-bottom:-1px">
+            <span style="width:8px;height:8px;border-radius:2px;background:var(--<%= p[:id] %>)"></span>
+            <%= p[:name] %>
+            <% if selected[p[:id]] %>
+              <span class="mono" style="font-size:10px;color:var(--ink-3);text-transform:uppercase">· <%= selected[p[:id]] %></span>
+            <% end %>
+            <% if p[:status] == "assist" %>
+              <span class="tag" style="font-size:9px;padding:0 4px">Assist</span>
+            <% elsif p[:status] == "paused" %>
+              <span class="tag warn" style="font-size:9px;padding:0 4px">Paused</span>
+            <% end %>
+          </button>
+        <% end %>
+      </div>
+
+      <%# Tab panels — 3 tone cards per platform %>
+      <% platforms.each_with_index do |p, idx| %>
+        <div data-tabs-target="panel" data-key="<%= p[:id] %>" data-display="grid"
+             id="platform-<%= p[:id] %>"
+             style="display:<%= idx.zero? ? 'grid' : 'none' %>;grid-template-columns:1fr 1fr 1fr;gap:18px">
+          <% tones.each do |tone| %>
+            <% angle = angles_by_pt[p[:id]][tone[:id]] %>
+            <% is_winner = selected[p[:id]] == tone[:id] %>
+            <% body = angle&.body || "[Generated copy]" %>
+            <% hook = angle&.hook %>
+            <% cta = angle&.cta %>
+            <% hashtags = (angle&.hashtags || []).map { |h| "##{h}" }.join(" ") %>
+
+            <div class="angle-card <%= 'winner' if is_winner %>">
+              <div class="angle-card-head">
+                <div class="row" style="gap:8px">
+                  <div class="tone-badge"><%= tone[:char] %></div>
+                  <span style="font-size:13px;font-weight:600;color: <%= is_winner ? 'var(--accent-fg)' : 'var(--ink)' %>">
+                    <%= tone[:label] %>
+                  </span>
+                  <% if is_winner %>
+                    <span class="tag" style="background:var(--accent);color:oklch(0.2 0.05 60);border-color:transparent">Winner</span>
+                  <% end %>
+                </div>
+                <div class="row" style="gap:4px">
+                  <button class="icon-btn" style="width:22px;height:22px;border:none">
+                    <%= icon :edit, size: 11 %>
+                  </button>
+                  <button class="icon-btn" style="width:22px;height:22px;border:none">
+                    <%= icon :refresh, size: 11 %>
+                  </button>
+                </div>
+              </div>
+
+              <div class="angle-card-desc"><%= tone[:desc] %></div>
+
+              <div class="angle-card-body">
+                <% if p[:id] == "tg" %>
+                  <%= render "telegram_preview", product: @product, copy: body, cta: cta %>
+                <% elsif p[:id] == "pin" %>
+                  <%= render "pinterest_preview", product: @product, tone_id: tone[:id], title: hook || @product.title, copy: body, hashtags: hashtags %>
+                <% elsif p[:id] == "x" %>
+                  <%= render "x_preview", product: @product, copy: body %>
+                <% elsif p[:id] == "tt" %>
+                  <%= render "tiktok_preview", copy: body %>
+                <% elsif p[:id] == "ig" %>
+                  <%= render "instagram_preview", product: @product, copy: body, hashtags: hashtags %>
+                <% end %>
+              </div>
+
+              <div class="angle-card-foot">
+                <div class="row" style="gap:12px;font-size:10px">
+                  <span class="mono" style="color:var(--ink-3)"><%= angle&.generated_by&.split(":")&.last || "v0" %></span>
+                  <span class="mono" style="color:var(--ink-3)"><%= body.length %> chars</span>
+                </div>
+                <% if angle %>
+                  <%= button_to select_angle_product_path(@product, platform: p[:id], tone: tone[:id]),
+                        method: :patch,
+                        class: "btn sm",
+                        form: { style: "display:inline" },
+                        style: "background: #{is_winner ? 'var(--accent)' : 'var(--surface)'};
+                                color: #{is_winner ? 'oklch(0.2 0.05 60)' : 'var(--ink)'};
+                                border-color: #{is_winner ? 'var(--accent)' : 'var(--line)'};
+                                font-weight:600" do %>
+                    <% if is_winner %>
+                      <%= icon :check, size: 11, stroke: 2.5 %> Selected
+                    <% else %>
+                      Pick this
+                    <% end %>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+
+      <%# Cross-platform overview %>
+      <div style="margin-top:32px">
+        <div class="eyebrow" style="margin-bottom:10px">Across all platforms</div>
+        <div class="card" style="padding:0">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>Platform</th>
+                <th>Practical</th>
+                <th>Premium</th>
+                <th>Witty</th>
+                <th style="width:80px">Schedule</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% platforms.each do |p| %>
+                <tr>
+                  <td><%= platform_pill p[:id] %></td>
+                  <% tones.each do |t| %>
+                    <% picked = selected[p[:id]] == t[:id] %>
+                    <td>
+                      <% if angles_by_pt[p[:id]][t[:id]] %>
+                        <%= button_to select_angle_product_path(@product, platform: p[:id], tone: t[:id]),
+                              method: :patch,
+                              form: { style: "display:inline" },
+                              style: "
+                                border: #{picked ? '1px solid var(--accent)' : '1px solid var(--line)'};
+                                background: #{picked ? 'var(--accent-bg)' : 'var(--surface)'};
+                                color: #{picked ? 'var(--accent-fg)' : 'var(--ink-2)'};
+                                padding:3px 8px;border-radius:4px;font-size:11px;font-family:var(--font-mono);
+                                cursor:pointer" do %>
+                          <% if picked %><%= icon :check, size: 10, stroke: 2.5 %> <% end %><%= t[:label] %>
+                        <% end %>
+                      <% else %>
+                        <span class="mono" style="font-size:11px;color:var(--ink-3)">—</span>
+                      <% end %>
+                    </td>
+                  <% end %>
+                  <td>
+                    <button class="btn sm ghost" style="padding:2px 6px">
+                      <%= icon :clock, size: 10 %> Time
+                    </button>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <% else %>
+      <%# Pending state — pipeline animation %>
+      <div class="card" style="padding:24px">
+        <div class="eyebrow" style="margin-bottom:16px">Pipeline</div>
+        <div class="col" style="gap:10px">
+          <%= render "products/pipeline_step", done: true,    label: "Apify scraper · fetched product data",  detail: "Title, images, price — 0.31s" %>
+          <%= render "products/pipeline_step", done: true,    label: "Affiliate deeplink generated",          detail: "alfi.co/#{@product.legacy_id.delete_prefix('P-').downcase}" %>
+          <%= render "products/pipeline_step", current: true, label: "Generating angles · 3 tones × 5 platforms", detail: "this can take up to 30s in production" %>
+        </div>
+        <div style="margin-top:18px;font-size:12px;color:var(--ink-3)">Refresh the page in a few seconds to see your angles.</div>
+      </div>
+    <% end %>
+  </section>
+
+  <%# RIGHT — schedule & ship %>
+  <aside style="border-left:1px solid var(--line);overflow-y:auto;padding:22px;background:var(--bg-2)">
+    <div class="eyebrow" style="margin-bottom:4px">Step 3 / 3</div>
+    <h3 class="serif" style="font-size:22px;margin:0 0 14px;font-style:normal">Ship.</h3>
+
+    <div class="col" style="gap:14px">
+      <div class="card" style="background:var(--surface);padding:0">
+        <div style="padding:10px 12px;border-bottom:1px solid var(--line)">
+          <div class="eyebrow">Selected angles</div>
+        </div>
+        <% selected.each do |plat, tone| %>
+          <div class="row" style="padding:8px 12px;border-bottom:1px solid var(--line);gap:8px">
+            <%= platform_pill plat %>
+            <span class="mono" style="font-size:11px;color: <%= tone ? 'var(--ink-2)' : 'var(--ink-3)' %>;margin-left:auto">
+              <%= tone || "— none" %>
+            </span>
+            <% if tone %><%= icon :check, size: 11, stroke: 2.5, style: "color:var(--pos)" %><% end %>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="card" style="background:var(--surface);padding:12px">
+        <div class="eyebrow" style="margin-bottom:8px">Schedule</div>
+        <div class="col" style="gap:6px">
+          <% [
+              { ic: :bolt,     label: "Ship now",            desc: "All 5 platforms · simultaneous", active: false },
+              { ic: :clock,    label: "Stagger across day",  desc: "Optimal times per platform",     active: true },
+              { ic: :calendar, label: "Custom schedule",     desc: "Pick time + day for each",       active: false }
+            ].each do |opt| %>
+            <button style="
+              display:flex;gap:10px;padding:8px;
+              border: <%= opt[:active] ? '1px solid var(--accent)' : '1px solid var(--line)' %>;
+              background: <%= opt[:active] ? 'var(--accent-bg)' : 'transparent' %>;
+              border-radius:6px;align-items:flex-start;text-align:left;cursor:pointer;width:100%">
+              <span style="margin-top:2px;color: <%= opt[:active] ? 'var(--accent-fg)' : 'var(--ink-3)' %>">
+                <%= icon opt[:ic], size: 13 %>
+              </span>
+              <div style="flex:1">
+                <div style="font-size:12px;font-weight:500;color: <%= opt[:active] ? 'var(--accent-fg)' : 'var(--ink)' %>"><%= opt[:label] %></div>
+                <div style="font-size:11px;color: <%= opt[:active] ? 'var(--accent-fg)' : 'var(--ink-3)' %>;opacity: <%= opt[:active] ? 0.8 : 1 %>"><%= opt[:desc] %></div>
+              </div>
+              <% if opt[:active] %>
+                <%= icon :check, size: 12, stroke: 2.5, style: "color:var(--accent-fg)" %>
+              <% end %>
+            </button>
+          <% end %>
+        </div>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px">
+        <div class="eyebrow" style="margin-bottom:6px">Tracking</div>
+        <div style="font-size:12px;color:var(--ink-2);line-height:1.55">
+          Each post gets a unique short link:<br>
+          <span class="mono" style="font-size:10px;color:var(--ink-3)">alfi.co/<%= @product.legacy_id.delete_prefix('P-').downcase %>-{plat}-{tone}</span>
+        </div>
+      </div>
+
+      <button class="btn accent center" style="padding:10px;font-size:14px;font-weight:600">
+        <%= icon :send, size: 13, stroke: 2 %>
+        Ship <%= selected.values.compact.count %> posts
+      </button>
+      <button class="btn ghost center">Save as draft</button>
+    </div>
+  </aside>
+</div>
+
+<style>
+  .alfi-tab.tab-active { color: var(--ink) !important; border-bottom-color: var(--ink) !important; }
+</style>

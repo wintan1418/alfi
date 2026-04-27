@@ -1,0 +1,35 @@
+<%# locals: (product:, tone_id:, title:, copy:, hashtags:) %>
+<%
+  bg = case tone_id
+       when "practical" then "oklch(0.92 0.05 60)"
+       when "premium"   then "oklch(0.18 0.02 80)"
+       else                  "oklch(0.85 0.12 25)"
+       end
+  fg = tone_id == "premium" ? "oklch(0.92 0.05 60)" : "oklch(0.2 0.02 80)"
+  font_family = tone_id == "premium" ? "Georgia, serif" : "-apple-system"
+  size = tone_id == "witty" ? 22 : 18
+%>
+<div style="background:white;border-radius:12px;overflow:hidden;border:1px solid #eee">
+  <% if product.display_image_url.present? && tone_id == "practical" %>
+    <div style="height:180px;position:relative;overflow:hidden">
+      <img src="<%= product.display_image_url %>" alt=""
+           style="width:100%;height:100%;object-fit:cover;filter:brightness(0.92)">
+      <div style="position:absolute;inset:0;background:linear-gradient(to bottom, transparent 40%, <%= bg %> 100%);padding:16px;display:flex;align-items:flex-end;color:<%= fg %>;font-family:<%= font_family %>;font-size:<%= size %>px;font-weight:700;line-height:1.15">
+        <%= title %>
+      </div>
+    </div>
+  <% else %>
+    <div style="height:180px;background:<%= bg %>;color:<%= fg %>;padding:16px;display:flex;align-items:flex-end;font-family:<%= font_family %>;font-size:<%= size %>px;font-weight:700;line-height:1.15">
+      <%= title %>
+    </div>
+  <% end %>
+  <div style="padding:10px;font-family:-apple-system,system-ui">
+    <div style="font-size:11px;color:#000;margin-bottom:6px;line-height:1.4"><%= copy %></div>
+    <div style="font-size:10px;color:oklch(0.6 0.19 25);margin-bottom:6px"><%= hashtags %></div>
+    <div class="row" style="gap:8px">
+      <div style="width:22px;height:22px;border-radius:50%;background:oklch(0.6 0.19 25)"></div>
+      <span style="font-size:10px;color:#000;flex:1">alfi · @alfifinds</span>
+      <span style="background:oklch(0.6 0.19 25);color:white;padding:4px 10px;border-radius:16px;font-size:10px;font-weight:600">Save</span>
+    </div>
+  </div>
+</div>

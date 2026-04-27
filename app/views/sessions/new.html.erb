@@ -1,0 +1,46 @@
+<% content_for :standalone, true %>
+<% content_for :title, "Sign in to alfi" %>
+
+<div style="min-height:100%;display:flex;align-items:center;justify-content:center;padding:48px 24px;background:var(--bg-2)">
+  <div style="width:100%;max-width:380px">
+    <div style="display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:32px">
+      <span class="sb-brand-mark" style="width:32px;height:32px;border-radius:6px;font-size:15px">α</span>
+      <span class="serif" style="font-size:28px;color:var(--ink);letter-spacing:-0.02em">alfi</span>
+    </div>
+
+    <div class="card" style="padding:28px">
+      <div class="eyebrow" style="margin-bottom:6px">Operator sign in</div>
+      <h1 class="serif" style="font-style:normal;font-size:24px;margin:0 0 22px">Welcome back.</h1>
+
+      <% if flash[:alert].present? %>
+        <div style="padding:10px 12px;background:var(--neg-bg);color:var(--neg);border-radius:6px;font-size:12px;margin-bottom:14px"><%= flash[:alert] %></div>
+      <% end %>
+      <% if flash[:notice].present? %>
+        <div style="padding:10px 12px;background:var(--pos-bg);color:var(--pos);border-radius:6px;font-size:12px;margin-bottom:14px"><%= flash[:notice] %></div>
+      <% end %>
+
+      <%= form_with url: session_path, class: "col", style: "gap:14px" do |f| %>
+        <div class="col" style="gap:6px">
+          <label class="eyebrow">Email</label>
+          <%= f.email_field :email_address, required: true, autofocus: true, autocomplete: "username",
+                value: params[:email_address], class: "input mono", placeholder: "you@example.com" %>
+        </div>
+
+        <div class="col" style="gap:6px">
+          <div class="spread">
+            <label class="eyebrow">Password</label>
+            <%= link_to "Forgot?", new_password_path, class: "mono", style: "font-size:11px;color:var(--ink-3)" %>
+          </div>
+          <%= f.password_field :password, required: true, autocomplete: "current-password",
+                maxlength: 72, class: "input mono", placeholder: "••••••••" %>
+        </div>
+
+        <%= f.submit "Sign in", class: "btn primary center", style: "padding:10px;font-size:14px;font-weight:600" %>
+      <% end %>
+    </div>
+
+    <div class="mono" style="text-align:center;margin-top:16px;color:var(--ink-3);font-size:11px">
+      affiliate automation · <span style="color:var(--accent-fg)">single operator</span>
+    </div>
+  </div>
+</div>

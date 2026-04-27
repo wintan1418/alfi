@@ -1,0 +1,48 @@
+default: &default
+  dispatchers:
+    - polling_interval: 1
+      batch_size: 500
+  workers:
+    # High-priority general queue
+    - queues: [ default, mailers ]
+      threads: 3
+      processes: <%= ENV.fetch("JOB_CONCURRENCY", 1) %>
+      polling_interval: 0.1
+
+    # Per-platform publish queues — bounded so we don't trip rate limits.
+    # Telegram allows 30 msg/sec global so 1 thread is fine for solo use.
+    - queues: [ telegram ]
+      threads: 1
+      processes: 1
+      polling_interval: 0.5
+
+    - queues: [ pinterest ]
+      threads: 1
+      processes: 1
+      polling_interval: 0.5
+
+    - queues: [ x ]
+      threads: 1
+      processes: 1
+      polling_interval: 0.5
+
+    # Click logging — separate, low-priority, can run hot
+    - queues: [ clicks ]
+      threads: 5
+      processes: 1
+      polling_interval: 0.2
+
+    # Catch-all for anything not explicitly routed
+    - queues: [ "*" ]
+      threads: 2
+      processes: 1
+      polling_interval: 1
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+
+production:
+  <<: *default

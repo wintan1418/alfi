@@ -1,0 +1,35 @@
+<% content_for :standalone, true %>
+<% content_for :title, "Reset password — alfi" %>
+
+<div style="min-height:100%;display:flex;align-items:center;justify-content:center;padding:48px 24px;background:var(--bg-2)">
+  <div style="width:100%;max-width:380px">
+    <div style="display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:32px">
+      <span class="sb-brand-mark" style="width:32px;height:32px;border-radius:6px;font-size:15px">α</span>
+      <span class="serif" style="font-size:28px;color:var(--ink);letter-spacing:-0.02em">alfi</span>
+    </div>
+
+    <div class="card" style="padding:28px">
+      <div class="eyebrow" style="margin-bottom:6px">Forgot password</div>
+      <h1 class="serif" style="font-style:normal;font-size:22px;margin:0 0 16px">Send reset instructions.</h1>
+      <p style="font-size:13px;color:var(--ink-3);margin:0 0 18px">We'll email a one-time link.</p>
+
+      <% if flash[:alert].present? %>
+        <div style="padding:10px 12px;background:var(--neg-bg);color:var(--neg);border-radius:6px;font-size:12px;margin-bottom:14px"><%= flash[:alert] %></div>
+      <% end %>
+
+      <%= form_with url: passwords_path, class: "col", style: "gap:14px" do |f| %>
+        <div class="col" style="gap:6px">
+          <label class="eyebrow">Email</label>
+          <%= f.email_field :email_address, required: true, autofocus: true, autocomplete: "username",
+                value: params[:email_address], class: "input mono", placeholder: "you@example.com" %>
+        </div>
+
+        <%= f.submit "Email reset link", class: "btn primary center", style: "padding:10px;font-size:14px;font-weight:600" %>
+      <% end %>
+
+      <div style="margin-top:14px;text-align:center">
+        <%= link_to "Back to sign in", new_session_path, class: "mono", style: "font-size:12px;color:var(--ink-3)" %>
+      </div>
+    </div>
+  </div>
+</div>

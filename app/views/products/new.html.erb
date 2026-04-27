@@ -1,0 +1,68 @@
+<% content_for :active_nav, "products" %>
+<% content_for :title, "Add product" %>
+<% @crumbs = ["alfi", "Products", "New"] %>
+
+<div class="page-narrow">
+  <%= link_to products_path, class: "btn ghost sm", style: "margin-bottom:16px" do %>
+    <%= icon :chev, size: 11, style: "transform:rotate(180deg)" %> Back
+  <% end %>
+
+  <div class="eyebrow" style="margin-bottom:4px">Step 1 / 3 — Find product</div>
+  <h1 class="section-h" style="margin-bottom:6px">Paste a Temu product URL.</h1>
+  <div class="section-sub" style="margin-bottom:24px">
+    The system fetches title, photos, price, and generates 15 angles in ~12 seconds.
+  </div>
+
+  <%= form_with model: @product, class: "card", style: "padding:18px;margin-bottom:16px" do |f| %>
+    <div style="display:flex;gap:8px">
+      <div style="flex:1;position:relative">
+        <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)">
+          <%= icon :link, size: 14 %>
+        </span>
+        <%= f.text_field :source_url,
+              placeholder: "https://www.temu.com/...",
+              class: "input mono with-icon",
+              required: true %>
+      </div>
+      <%= f.button type: "submit", class: "btn primary" do %>
+        <%= icon :sparkle, size: 13 %> Generate
+      <% end %>
+    </div>
+
+    <%# hidden minimum-fill for now so create succeeds without scraping %>
+    <%= f.hidden_field :title, value: @product.title.presence || "Imported from Temu (pending scrape)" %>
+
+    <div class="row" style="margin-top:10px;gap:16px;font-size:11px;color:var(--ink-3)">
+      <span>or</span>
+      <button type="button" class="btn sm ghost"><%= icon :upload, size: 11 %> Bulk paste (one per line)</button>
+      <button type="button" class="btn sm ghost"><%= icon :bolt, size: 11 %> Pull Hot Items list</button>
+    </div>
+
+    <% if @product.errors.any? %>
+      <div style="margin-top:12px;padding:10px;background:var(--neg-bg);color:var(--neg);border-radius:6px;font-size:12px">
+        <%= @product.errors.full_messages.to_sentence %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <%# Pipeline %>
+  <div class="card" style="padding:18px">
+    <div class="eyebrow" style="margin-bottom:14px">Pipeline</div>
+    <div class="col" style="gap:10px">
+      <%= render "products/pipeline_step", done: true,    label: "Apify scraper · fetched product data",        detail: "Title, images, price, variants — 0.31s" %>
+      <%= render "products/pipeline_step", done: true,    label: "Affiliate deeplink generated",                detail: "alfi.co/p2841 → tracked Temu URL" %>
+      <%= render "products/pipeline_step", done: true,    label: "Claude · Practical tone × 5 platforms",       detail: "prompt v3.2 · 1284 tokens" %>
+      <%= render "products/pipeline_step", done: true,    label: "Claude · Premium tone × 5 platforms",         detail: "prompt v3.2 · 1391 tokens" %>
+      <%= render "products/pipeline_step", done: true,    label: "Claude · Witty tone × 5 platforms",           detail: "prompt v3.2 · 1052 tokens" %>
+      <%= render "products/pipeline_step", done: true,    label: "Pinterest pin variants rendered",             detail: "3 image cards generated" %>
+      <%= render "products/pipeline_step", current: true, label: "Score & quality check",                       detail: "evaluating angle uniqueness…" %>
+    </div>
+    <div class="row" style="margin-top:18px;gap:8px">
+      <button class="btn ghost center" style="flex:1">Save & add another</button>
+      <%= link_to (Product.first ? product_path(Product.order(updated_at: :desc).first) : products_path),
+            class: "btn accent center", style: "flex:1;font-weight:600" do %>
+        Continue to angles <%= icon :arrow_right, size: 13 %>
+      <% end %>
+    </div>
+  </div>
+</div>

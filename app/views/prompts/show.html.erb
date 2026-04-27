@@ -1,0 +1,196 @@
+<% content_for :active_nav, "prompts" %>
+<% content_for :title, "Prompt library" %>
+<% @crumbs = ["alfi", "Workshop", "Prompt library"] %>
+
+<%
+  prompts = [
+    { id: "prac-tg",   tone: "Practical", plat: "Telegram",  v: "v3.2", updated: "Apr 14", epc: 0.81, runs: 142, status: "active" },
+    { id: "prac-pin",  tone: "Practical", plat: "Pinterest", v: "v3.2", updated: "Apr 14", epc: 0.79, runs: 168, status: "active", hot: true },
+    { id: "prac-x",    tone: "Practical", plat: "X",         v: "v3.2", updated: "Apr 14", epc: 0.62, runs:  88, status: "active" },
+    { id: "prac-tt",   tone: "Practical", plat: "TikTok",    v: "v2.8", updated: "Mar 30", epc: 0.41, runs:  42, status: "active" },
+    { id: "prac-ig",   tone: "Practical", plat: "Instagram", v: "v2.8", updated: "Mar 30", epc: 0.31, runs:  18, status: "active" },
+    { id: "prem-tg",   tone: "Premium",   plat: "Telegram",  v: "v3.2", updated: "Apr 14", epc: 0.68, runs:  96, status: "active" },
+    { id: "prem-pin",  tone: "Premium",   plat: "Pinterest", v: "v3.2", updated: "Apr 14", epc: 0.71, runs: 142, status: "active" },
+    { id: "prem-x",    tone: "Premium",   plat: "X",         v: "v3.2", updated: "Apr 14", epc: 0.54, runs:  64, status: "active" },
+    { id: "wit-tg",    tone: "Witty",     plat: "Telegram",  v: "v3.2", updated: "Apr 14", epc: 0.92, runs: 120, status: "active", hot: true },
+    { id: "wit-pin",   tone: "Witty",     plat: "Pinterest", v: "v3.2", updated: "Apr 14", epc: 0.66, runs:  88, status: "active" },
+    { id: "wit-x",     tone: "Witty",     plat: "X",         v: "v3.2", updated: "Apr 14", epc: 0.78, runs: 158, status: "active" },
+    { id: "prac-old",  tone: "Practical", plat: "Pinterest", v: "v2.0", updated: "Mar 02", epc: 0.61, runs: 412, status: "archived" },
+    { id: "prac-old2", tone: "Practical", plat: "Pinterest", v: "v1.0", updated: "Feb 14", epc: 0.42, runs: 218, status: "archived" }
+  ]
+
+  sel = prompts.find { |p| p[:id] == "prac-pin" } || prompts.first
+
+  prompt_text = <<~TXT
+    You are writing a {{platform}} post for an affiliate product on Temu.
+
+    TONE: {{tone}}
+    - Practical: plainspoken, use-case first, "this just works" energy
+    - Premium: aspirational, lifestyle, "you deserve it"
+    - Witty: punchy, conversational, "stop scrolling"
+
+    PRODUCT
+    - Title: {{product.title}}
+    - Price: {{product.price}}
+    - Photos: {{product.image_urls}}
+    - Top features: {{product.features | join: ", "}}
+
+    PLATFORM RULES
+    {% if platform == "pinterest" %}
+    - Lead with a 4-8 word visual hook (this becomes pin overlay)
+    - Body: 2-3 sentences max, must feel like organic save-worthy content
+    - 4-6 hashtags, lowercase, no spam tokens
+    - Never expose the raw temu URL — use {{tracked_link}}
+    {% elsif platform == "telegram" %}
+    - 80-180 words, line breaks for scannability
+    - One emoji max, only if it adds info (→ ↓ 🔗)
+    - End with $price + tracked link
+    {% elsif platform == "x" %}
+    - 220 chars max, 1-3 short lines, no hashtags
+    - Personality > information; the link does the rest
+    {% endif %}
+
+    OUTPUT JSON
+    { "copy": "...", "title": "...", "cta": "...", "hashtags": "..." }
+
+    CONSTRAINTS
+    - Never invent specs not in product data
+    - Never use "game-changer", "must-have", "level up", "unleash"
+    - Never end with a question unless witty tone
+  TXT
+%>
+
+<div style="display:grid;grid-template-columns:380px 1fr;height:100%;overflow:hidden">
+  <%# LEFT — list %>
+  <aside style="border-right:1px solid var(--line);overflow-y:auto;background:var(--bg-2)">
+    <div style="padding:20px 20px 12px">
+      <h1 class="section-h" style="font-size:26px">Prompt library</h1>
+      <div class="section-sub" style="font-size:12px;margin-top:4px">
+        <span class="mono">11 active</span> · <span class="mono">2 archived</span> · versioned
+      </div>
+    </div>
+
+    <div style="padding:0 12px 12px" class="row">
+      <button class="btn sm" style="flex:1;justify-content:center"><%= icon :plus, size: 11, stroke: 2.2 %> New prompt</button>
+      <button class="btn sm ghost" style="flex:1;justify-content:center"><%= icon :bolt, size: 11 %> A/B test</button>
+    </div>
+
+    <div class="eyebrow" style="padding:8px 20px 6px">Active · v3.2 series</div>
+    <% prompts.select { |p| p[:status] == "active" }.each do |p| %>
+      <% is_active = p[:id] == sel[:id] %>
+      <button style="
+        width:100%;text-align:left;border:none;cursor:pointer;
+        background: <%= is_active ? 'var(--surface)' : 'transparent' %>;
+        border-left: <%= is_active ? '2px solid var(--accent)' : '2px solid transparent' %>;
+        padding:10px 18px;display:block">
+        <div class="row" style="gap:6px;margin-bottom:3px">
+          <span style="font-size:13px;color:var(--ink);font-weight: <%= is_active ? 600 : 500 %>"><%= p[:tone] %></span>
+          <span style="color:var(--ink-3);font-size:12px">· <%= p[:plat] %></span>
+          <% if p[:hot] %><%= icon :bolt, size: 10, stroke: 2.2, style: "color:var(--accent)" %><% end %>
+          <span class="mono" style="font-size:10px;color:var(--ink-3);margin-left:auto"><%= p[:v] %></span>
+        </div>
+        <div class="row" style="gap:8px;font-size:11px">
+          <span class="mono" style="color:var(--ink-3)"><%= p[:runs] %> runs</span>
+          <span class="mono" style="color:var(--ink-3)">·</span>
+          <span class="mono" style="color:var(--pos)">$<%= "%.2f" % p[:epc] %> EPC</span>
+        </div>
+      </button>
+    <% end %>
+
+    <div class="eyebrow" style="padding:14px 20px 6px">Archived</div>
+    <% prompts.select { |p| p[:status] == "archived" }.each do |p| %>
+      <button style="width:100%;text-align:left;border:none;cursor:pointer;background:transparent;border-left:2px solid transparent;padding:10px 18px;display:block">
+        <div class="row" style="gap:6px;margin-bottom:3px">
+          <span style="font-size:13px;color:var(--ink-2);font-weight:500"><%= p[:tone] %></span>
+          <span style="color:var(--ink-3);font-size:12px">· <%= p[:plat] %></span>
+          <span class="mono" style="font-size:10px;color:var(--ink-3);margin-left:auto"><%= p[:v] %></span>
+        </div>
+        <div class="row" style="gap:8px;font-size:11px">
+          <span class="mono" style="color:var(--ink-3)"><%= p[:runs] %> runs</span>
+          <span class="mono" style="color:var(--ink-3)">·</span>
+          <span class="mono" style="color:var(--ink-3)">$<%= "%.2f" % p[:epc] %> EPC</span>
+        </div>
+      </button>
+    <% end %>
+  </aside>
+
+  <%# RIGHT — editor %>
+  <section style="overflow-y:auto;padding:24px 32px 60px">
+    <div class="spread" style="margin-bottom:18px">
+      <div>
+        <div class="eyebrow" style="margin-bottom:4px">
+          <%= sel[:tone] %> · <%= sel[:plat] %> · <%= sel[:v] %>
+        </div>
+        <h2 class="serif" style="font-size:26px;margin:0;font-style:normal">
+          <%= sel[:tone].downcase %> <em>on</em> <%= sel[:plat].downcase %>
+        </h2>
+        <div style="font-size:12px;color:var(--ink-3);margin-top:4px">
+          Updated <%= sel[:updated] %> · <%= sel[:runs] %> runs · drives
+          <span class="mono" style="color:var(--pos)">$<%= "%.2f" % sel[:epc] %> EPC</span>
+        </div>
+      </div>
+      <div class="row" style="gap:8px">
+        <button class="btn sm ghost"><%= icon :refresh, size: 11 %> Revert</button>
+        <button class="btn sm ghost"><%= icon :layers, size: 11 %> Diff vs v2.0</button>
+        <button class="btn sm primary">Save as v3.3</button>
+      </div>
+    </div>
+
+    <div class="card" style="padding:14px;margin-bottom:18px">
+      <div class="eyebrow" style="margin-bottom:10px">Version performance — EPC</div>
+      <div class="col" style="gap:8px">
+        <% [
+          { v: "v3.2", val: sel[:epc], runs: sel[:runs], current: true },
+          { v: "v2.0", val: 0.61, runs: 412, current: false },
+          { v: "v1.0", val: 0.42, runs: 218, current: false }
+        ].each do |r| %>
+          <div class="row" style="gap:10px">
+            <span class="mono" style="font-size:11px;color: <%= r[:current] ? 'var(--accent-fg)' : 'var(--ink-3)' %>;width:40px;font-weight: <%= r[:current] ? 600 : 400 %>"><%= r[:v] %></span>
+            <div style="flex:1;height:16px;background:var(--bg-3);border-radius:3px;overflow:hidden">
+              <div style="
+                width: <%= (r[:val] / 1.0 * 100).round %>%; height:100%;
+                background: <%= r[:current] ? 'var(--accent)' : 'var(--ink-3)' %>;
+                display:flex;align-items:center;justify-content:flex-end;padding:0 6px;
+                color: <%= r[:current] ? 'oklch(0.2 0.05 60)' : 'var(--bg)' %>;
+                font-family:var(--font-mono);font-size:10px;font-weight:600">$<%= "%.2f" % r[:val] %></div>
+            </div>
+            <span class="mono" style="font-size:10px;color:var(--ink-3);width:60px;text-align:right"><%= r[:runs] %> runs</span>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="card" style="padding:0">
+      <div class="card-head">
+        <div class="card-title">Prompt source</div>
+        <span class="card-sub" style="margin-left:8px">Liquid templating · Claude Sonnet 4.6 · max 1500 tokens</span>
+        <div style="flex:1"></div>
+        <button class="btn sm ghost"><%= icon :eye, size: 11 %> Test run</button>
+      </div>
+      <pre style="margin:0;padding:18px;font-family:var(--font-mono);font-size:12px;line-height:1.65;color:var(--ink-2);background:var(--bg-2);white-space:pre-wrap;word-break:break-word;border-radius:0"><%= prompt_text %></pre>
+    </div>
+
+    <div class="card" style="margin-top:16px;padding:0">
+      <div class="card-head"><div class="card-title">Variables in scope</div></div>
+      <table class="tbl">
+        <tbody>
+          <% [
+            ["{{ product.title }}",      "string", "Scraped from Temu via Apify"],
+            ["{{ product.price }}",      "string", "Display price (e.g. \"$4.97\")"],
+            ["{{ product.image_urls }}", "array",  "CDN URLs, up to 6 photos"],
+            ["{{ product.features }}",   "array",  "Bullet points from product description"],
+            ["{{ tracked_link }}",       "string", "Generated alfi.co/p2841-{plat}-{tone} short link"],
+            ["{{ platform }}",           "enum",   "telegram | pinterest | x | tiktok | instagram"],
+            ["{{ tone }}",               "enum",   "practical | premium | witty"]
+          ].each do |row| %>
+            <tr>
+              <td class="mono" style="color:var(--accent-fg);font-size:11px"><%= row[0] %></td>
+              <td class="mono" style="font-size:11px;color:var(--ink-3)"><%= row[1] %></td>
+              <td style="font-size:12px;color:var(--ink-2)"><%= row[2] %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

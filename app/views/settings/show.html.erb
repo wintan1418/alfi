@@ -1,0 +1,134 @@
+<% content_for :active_nav, "settings" %>
+<% content_for :title, "Settings" %>
+<% @crumbs = ["alfi", "Settings"] %>
+
+<%
+  channels = [
+    { name: "Telegram",     key: "tg",  status: "Live",   detail: "@alfifinds · 14.2k subs · webhook OK",                meta: "Connected Mar 14" },
+    { name: "Pinterest",    key: "pin", status: "Live",   detail: "alfi.co domain verified · 5 boards",                  meta: "Connected Mar 18" },
+    { name: "X / Twitter",  key: "x",   status: "Live",   detail: "API tier: Basic · $200/mo · 47/100 posts this month", meta: "Connected Mar 22" },
+    { name: "TikTok",       key: "tt",  status: "Assist", detail: "No publishing API — script & asset generation only",  meta: "—" },
+    { name: "Instagram",    key: "ig",  status: "Paused", detail: "Graph API connected · no link in caption (limitation)", meta: "Paused Apr 12" }
+  ]
+
+  prompts_versions = [
+    { v: "v3.2", label: "Practical · platform-aware", when_at: "Apr 14", active: true,  perf: "EPC: $0.79" },
+    { v: "v3.2", label: "Premium · platform-aware",   when_at: "Apr 14", active: true,  perf: "EPC: $0.71" },
+    { v: "v3.2", label: "Witty · platform-aware",     when_at: "Apr 14", active: true,  perf: "EPC: $0.92" },
+    { v: "v2.0", label: "Practical (legacy)",         when_at: "Mar 02", active: false, perf: "EPC: $0.61" }
+  ]
+%>
+
+<div class="page-wide">
+  <h1 class="section-h" style="margin-bottom:6px">Settings</h1>
+  <div class="section-sub" style="margin-bottom:28px">Operator-level. Workspace-wide. No multi-tenant.</div>
+
+  <%# Channels %>
+  <div style="margin-bottom:36px;display:grid;grid-template-columns:240px 1fr;gap:32px">
+    <div>
+      <h3 class="serif" style="font-size:22px;font-style:normal;margin:0 0 4px">Channels</h3>
+      <div style="font-size:12px;color:var(--ink-3)">Connected publishing destinations</div>
+    </div>
+    <div>
+      <% channels.each do |c| %>
+        <div class="row" style="padding:14px 0;gap:14px;border-bottom:1px solid var(--line)">
+          <div style="width:32px;height:32px;border-radius:6px;background:var(--<%= c[:key] %>);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;font-family:var(--font-mono)">
+            <%= c[:name][0] %>
+          </div>
+          <div style="flex:1">
+            <div class="row" style="gap:8px">
+              <span style="font-size:14px;color:var(--ink);font-weight:600"><%= c[:name] %></span>
+              <% if c[:status] == "Live" %>
+                <span class="tag live"><span class="dot"></span><%= c[:status] %></span>
+              <% elsif c[:status] == "Assist" %>
+                <span class="tag flagged"><%= c[:status] %></span>
+              <% else %>
+                <span class="tag warn"><%= c[:status] %></span>
+              <% end %>
+            </div>
+            <div class="mono" style="font-size:11px;color:var(--ink-3);margin-top:3px"><%= c[:detail] %></div>
+          </div>
+          <div class="mono" style="font-size:10px;color:var(--ink-3)"><%= c[:meta] %></div>
+          <button class="btn sm ghost">Configure</button>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Domain %>
+  <div style="margin-bottom:36px;display:grid;grid-template-columns:240px 1fr;gap:32px">
+    <div>
+      <h3 class="serif" style="font-size:22px;font-style:normal;margin:0 0 4px">Domain & short links</h3>
+      <div style="font-size:12px;color:var(--ink-3)">alfi.co — used for tracked redirects</div>
+    </div>
+    <div>
+      <div class="card" style="padding:16px;background:var(--bg-2)">
+        <div class="spread" style="margin-bottom:8px">
+          <span class="mono" style="font-size:14px;color:var(--ink);font-weight:600">alfi.co</span>
+          <span class="tag live"><span class="dot"></span>Verified</span>
+        </div>
+        <div style="font-size:12px;color:var(--ink-3);line-height:1.6">
+          Pinterest verification: <span class="mono" style="color:var(--pos)">✓ verified Mar 18</span><br>
+          DNS records: <span class="mono">TXT, MX, A — all valid</span><br>
+          SSL: <span class="mono" style="color:var(--pos)">active until Aug 14, 2026</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%# Prompts %>
+  <div style="margin-bottom:36px;display:grid;grid-template-columns:240px 1fr;gap:32px">
+    <div>
+      <h3 class="serif" style="font-size:22px;font-style:normal;margin:0 0 4px">AI prompts</h3>
+      <div style="font-size:12px;color:var(--ink-3)">Versioned. Every angle records the prompt that wrote it.</div>
+    </div>
+    <div>
+      <% prompts_versions.each do |p| %>
+        <div class="row" style="padding:10px 0;gap:12px;border-bottom:1px solid var(--line)">
+          <span class="mono" style="font-size:11px;padding:2px 6px;background: <%= p[:active] ? 'var(--accent-bg)' : 'var(--bg-3)' %>;color: <%= p[:active] ? 'var(--accent-fg)' : 'var(--ink-3)' %>;border-radius:4px;min-width:36px;text-align:center"><%= p[:v] %></span>
+          <span style="flex:1;color:var(--ink);font-size:13px"><%= p[:label] %></span>
+          <span class="mono" style="font-size:11px;color:var(--ink-3)"><%= p[:perf] %></span>
+          <span class="mono" style="font-size:11px;color:var(--ink-3)"><%= p[:when_at] %></span>
+          <% if p[:active] %>
+            <span class="tag live"><span class="dot"></span>Active</span>
+          <% else %>
+            <button class="btn sm ghost">Diff</button>
+          <% end %>
+        </div>
+      <% end %>
+      <button class="btn sm" style="margin-top:12px"><%= icon :plus, size: 11 %> New prompt version</button>
+    </div>
+  </div>
+
+  <%# Discovery %>
+  <div style="margin-bottom:36px;display:grid;grid-template-columns:240px 1fr;gap:32px">
+    <div>
+      <h3 class="serif" style="font-size:22px;font-style:normal;margin:0 0 4px">Discovery</h3>
+      <div style="font-size:12px;color:var(--ink-3)">Auto-pull from Temu Hot Items</div>
+    </div>
+    <div>
+      <% [
+        { label: "Daily Hot Items sync",            sub: "Runs at 06:00 · 12 products / day · via Apify",          on: true },
+        { label: "Auto-generate angles on import",  sub: "Skips manual queue · only if score ≥ 75",                on: true },
+        { label: "Auto-schedule top-scoring products", sub: "Posts to all live channels at optimal times",          on: false }
+      ].each do |t| %>
+        <div class="row" style="padding:12px 0;gap:14px">
+          <div style="flex:1">
+            <div style="font-size:13px;color:var(--ink);font-weight:500"><%= t[:label] %></div>
+            <div class="mono" style="font-size:11px;color:var(--ink-3)"><%= t[:sub] %></div>
+          </div>
+          <div style="
+            width:32px;height:18px;border-radius:10px;
+            background: <%= t[:on] ? 'var(--accent)' : 'var(--bg-3)' %>;
+            border:1px solid var(--line);
+            position:relative;cursor:pointer">
+            <div style="
+              width:14px;height:14px;border-radius:50%;background:white;
+              position:absolute;top:1px;left: <%= t[:on] ? '16px' : '1px' %>;
+              box-shadow:0 1px 2px rgba(0,0,0,0.2)"></div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

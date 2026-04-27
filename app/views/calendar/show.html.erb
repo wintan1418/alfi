@@ -1,0 +1,47 @@
+<% content_for :active_nav, "calendar" %>
+<% content_for :title, "Calendar" %>
+<% @crumbs = ["alfi", "Calendar"] %>
+
+<div class="page">
+  <div class="spread" style="margin-bottom:20px">
+    <div>
+      <h1 class="section-h">Calendar</h1>
+      <div class="section-sub">
+        <%= @range_label %> · <span class="mono"><%= @scheduled_count %> posts scheduled</span>
+      </div>
+    </div>
+    <div class="row" style="gap:8px">
+      <%= link_to @prev_link, class: "btn sm ghost", title: "Previous" do %>
+        <%= icon :chev, size: 11, style: "transform:rotate(180deg)" %>
+      <% end %>
+      <%= link_to "Today", @today_link, class: "btn sm" %>
+      <%= link_to @next_link, class: "btn sm ghost", title: "Next" do %>
+        <%= icon :chev, size: 11 %>
+      <% end %>
+      <div style="width:1px;height:18px;background:var(--line);margin:0 4px"></div>
+
+      <%= link_to "Week",  calendar_path(view: "week"),  class: ("btn sm" + (@view == "week"  ? "" : " ghost")) %>
+      <%= link_to "Month", calendar_path(view: "month"), class: ("btn sm" + (@view == "month" ? "" : " ghost")) %>
+
+      <%= link_to new_product_path, class: "btn accent", style: "margin-left:8px" do %>
+        <%= icon :plus, size: 11, stroke: 2.2 %> Schedule
+      <% end %>
+    </div>
+  </div>
+
+  <% if @view == "month" %>
+    <%= render "month" %>
+  <% else %>
+    <%= render "week" %>
+  <% end %>
+
+  <% if @scheduled_count.zero? %>
+    <div style="text-align:center;padding:40px 20px;color:var(--ink-3)">
+      <div class="eyebrow" style="margin-bottom:6px">Nothing scheduled in this <%= @view %></div>
+      <div style="font-size:13px">
+        <%= link_to "Add a product", new_product_path, style: "color:var(--accent-fg)" %> or
+        <%= link_to "browse the queue", products_path, style: "color:var(--accent-fg)" %>.
+      </div>
+    </div>
+  <% end %>
+</div>

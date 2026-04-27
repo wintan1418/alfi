@@ -1,0 +1,56 @@
+<%
+  days  = %w[Mon Tue Wed Thu Fri Sat Sun]
+  hours = CalendarController::HOURS
+  short = { "telegram" => "tg", "pinterest" => "pin", "x" => "x", "tiktok" => "tt", "instagram" => "ig" }
+%>
+
+<div class="card" style="padding:0;overflow:hidden">
+  <div style="display:grid;grid-template-columns:60px repeat(7, 1fr);border-bottom:1px solid var(--line)">
+    <div style="padding:10px;background:var(--bg-2)"></div>
+    <% days.each_with_index do |d, i| %>
+      <% date = @week_start + i.days %>
+      <% is_today = date == Date.current %>
+      <div style="padding:10px 12px;border-left:1px solid var(--line);background: <%= is_today ? 'var(--accent-bg)' : 'var(--bg-2)' %>">
+        <div class="eyebrow" style="<%= 'color:var(--accent-fg)' if is_today %>"><%= d %></div>
+        <div class="serif" style="font-size:22px;color: <%= is_today ? 'var(--accent-fg)' : 'var(--ink)' %>;font-style:normal"><%= date.day %></div>
+      </div>
+    <% end %>
+  </div>
+
+  <% hours.each_with_index do |h, hour_idx| %>
+    <div style="display:grid;grid-template-columns:60px repeat(7, 1fr);<%= 'border-bottom:1px solid var(--line)' unless hour_idx == hours.size - 1 %>;min-height:70px">
+      <div style="padding:8px;background:var(--bg-2)" class="mono">
+        <span style="font-size:11px;color:var(--ink-3)"><%= '%02d' % h %>:00</span>
+      </div>
+      <% (0..6).each do |day_idx| %>
+        <% is_today_col = (@week_start + day_idx.days) == Date.current %>
+        <div style="border-left:1px solid var(--line);padding:4px;position:relative;min-height:70px;<%= 'background:var(--accent-bg)' if is_today_col %>">
+          <% (@grid[day_idx][hour_idx] || []).each do |post| %>
+            <%
+              short_key = short[post.platform.to_s] || post.platform.to_s
+              product = post.content_angle&.product
+              title = product ? truncate(product.title, length: 18) : (post.content_angle&.hook || "Post")
+              tone = post.content_angle&.tone
+              is_live = post.published?
+            %>
+            <%= link_to product ? product_path(product) : "#",
+                  style: "
+                    display:block;text-decoration:none;
+                    background: #{is_live ? 'var(--accent-bg)' : 'var(--bg-2)'};
+                    border:1px solid var(--#{short_key});border-left-width:3px;
+                    border-radius:4px;padding:4px 6px;margin-bottom:3px;font-size:11px" do %>
+              <div class="row" style="gap:4px;margin-bottom:1px">
+                <span style="width:6px;height:6px;border-radius:1px;background:var(--<%= short_key %>)"></span>
+                <span style="flex:1;color:var(--ink);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><%= title %></span>
+                <% if product&.flagged? %><%= icon :bolt, size: 9, stroke: 2.2, style: "color:var(--accent)" %><% end %>
+              </div>
+              <div class="mono" style="font-size:9px;color:var(--ink-3)">
+                <%= tone %><%= ' · live' if is_live %>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>

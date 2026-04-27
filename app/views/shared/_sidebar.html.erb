@@ -1,0 +1,66 @@
+<%# locals: (active:) %>
+<%
+  primary = [
+    { id: "dashboard", label: "Dashboard", icon: :home, path: root_path },
+    { id: "products",  label: "Products",  icon: :box,  path: products_path,  count: defined?(@nav_counts) ? @nav_counts[:products] : nil },
+    { id: "calendar",  label: "Calendar",  icon: :calendar, path: calendar_path, count: defined?(@nav_counts) ? @nav_counts[:calendar] : nil },
+    { id: "analytics", label: "Analytics", icon: :chart, path: analytics_path },
+    { id: "earnings",  label: "Earnings",  icon: :dollar, path: earnings_path }
+  ]
+  workshop = [
+    { id: "inbox",   label: "Reconcile",      icon: :inbox,   path: earnings_path,    count: defined?(@nav_counts) ? @nav_counts[:inbox] : nil },
+    { id: "links",   label: "Short links",    icon: :link,    path: links_path },
+    { id: "prompts", label: "Prompt library", icon: :sparkle, path: prompts_path }
+  ]
+  channels = [
+    { name: "Telegram",    key: "tg",  status: :live },
+    { name: "Pinterest",   key: "pin", status: :live },
+    { name: "X / Twitter", key: "x",   status: :live },
+    { name: "TikTok",      key: "tt",  status: :assist },
+    { name: "Instagram",   key: "ig",  status: :paused }
+  ]
+  status_color = { live: "var(--pos)", assist: "var(--accent)", paused: "var(--ink-4)" }
+%>
+<aside class="sidebar">
+  <%= link_to root_path, class: "sb-brand", style: "text-decoration:none" do %>
+    <span class="sb-brand-mark">α</span>
+    alfi
+  <% end %>
+
+  <% primary.each do |it| %>
+    <%= link_to it[:path], class: "sb-item #{'active' if active == it[:id]}" do %>
+      <%= icon it[:icon], size: 14, class_name: "sb-icon" %>
+      <%= it[:label] %>
+      <% if it[:count] %><span class="sb-count mono"><%= it[:count] %></span><% end %>
+    <% end %>
+  <% end %>
+
+  <div class="sb-section-label">Workshop</div>
+  <% workshop.each do |it| %>
+    <%= link_to it[:path], class: "sb-item #{'active' if active == it[:id]}" do %>
+      <%= icon it[:icon], size: 14, class_name: "sb-icon" %>
+      <%= it[:label] %>
+      <% if it[:count] %><span class="sb-count mono"><%= it[:count] %></span><% end %>
+    <% end %>
+  <% end %>
+
+  <div class="sb-section-label">Channels</div>
+  <% channels.each do |c| %>
+    <div class="sb-channel">
+      <span class="sb-channel-dot" style="background: var(--<%= c[:key] %>)"></span>
+      <span class="sb-channel-name"><%= c[:name] %></span>
+      <span class="sb-channel-status" style="background: <%= status_color[c[:status]] %>"></span>
+    </div>
+  <% end %>
+
+  <div class="sb-footer">
+    <div class="sb-avatar">PA</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:12px;color:var(--ink);font-weight:500">Pastro Alfred</div>
+      <div class="mono" style="font-size:10px">operator</div>
+    </div>
+    <%= link_to settings_path, class: "icon-btn", title: "Settings" do %>
+      <%= icon :settings, size: 13 %>
+    <% end %>
+  </div>
+</aside>

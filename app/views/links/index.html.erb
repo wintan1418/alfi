@@ -1,0 +1,99 @@
+<% content_for :active_nav, "links" %>
+<% content_for :title, "Short links" %>
+<% @crumbs = ["alfi", "Workshop", "Short links"] %>
+
+<%
+  links = [
+    { slug: "p2841-pin-pra", target: "Cable Organizer · Pinterest · Practical", clicks: 612, earned: 486.20, ctr: "4.77%", live: true,  hot: true },
+    { slug: "p2841-tg-wit",  target: "Cable Organizer · Telegram · Witty",      clicks: 312, earned: 287.04, ctr: "3.80%", live: true,  hot: true },
+    { slug: "p2835-pin-prm", target: "Laptop Stand · Pinterest · Premium",      clicks: 240, earned: 211.20, ctr: "2.55%", live: true },
+    { slug: "p2837-tg-wit",  target: "Self-Stir Mug · Telegram · Witty",        clicks: 198, earned: 140.58, ctr: "3.82%", live: true },
+    { slug: "p2840-x-wit",   target: "Hairdryer · X · Witty",                   clicks: 158, earned:  97.96, ctr: "1.11%", live: true },
+    { slug: "p2836-pin-pra", target: "Speaker · Pinterest · Practical",         clicks: 142, earned:  88.40, ctr: "2.10%", live: true },
+    { slug: "p2833-tg-pra",  target: "Stretch Lids · Telegram · Practical",     clicks:  96, earned:  52.80, ctr: "1.92%", live: true },
+    { slug: "p2834-pin-pra", target: "Pet Roller · Pinterest · Practical",      clicks:  42, earned:  14.20, ctr: "0.81%", live: false }
+  ]
+%>
+
+<div class="page">
+  <div class="spread" style="margin-bottom:20px">
+    <div>
+      <h1 class="section-h">Short links</h1>
+      <div class="section-sub">Every (product × angle × channel) gets its own tracked URL · domain <span class="mono">alfi.co</span></div>
+    </div>
+    <div class="row" style="gap:8px">
+      <button class="btn"><%= icon :upload, size: 13 %> Export</button>
+      <button class="btn accent"><%= icon :plus, size: 13, stroke: 2.2 %> New link</button>
+    </div>
+  </div>
+
+  <div class="kpi-row" style="margin-bottom:20px">
+    <div class="kpi">
+      <div class="kpi-label">Active links</div>
+      <div class="kpi-value">187</div>
+      <div class="kpi-delta up">+24 this week</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Clicks · 30d</div>
+      <div class="kpi-value">12,840</div>
+      <div class="kpi-delta up">+18.4%</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Top EPC</div>
+      <div class="kpi-value"><span class="unit">$</span>0.92</div>
+      <div class="kpi-delta">witty · TG</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Bot traffic blocked</div>
+      <div class="kpi-value">312</div>
+      <div class="kpi-delta">2.4% of total</div>
+    </div>
+  </div>
+
+  <div class="card" style="padding:0">
+    <div class="card-head">
+      <div class="card-title">All tracked links</div>
+      <span class="card-sub" style="margin-left:8px">sorted by earnings · MTD</span>
+      <div style="flex:1"></div>
+      <button class="btn sm ghost"><%= icon :filter, size: 11 %> Platform</button>
+      <button class="btn sm ghost"><%= icon :filter, size: 11 %> Tone</button>
+    </div>
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>Slug</th>
+          <th>Target</th>
+          <th class="r">Clicks</th>
+          <th class="r">CTR</th>
+          <th class="r">Earned</th>
+          <th>Status</th>
+          <th style="width:100px"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% links.each do |l| %>
+          <tr>
+            <td>
+              <div class="row" style="gap:6px">
+                <span class="mono" style="font-size:11px;color:var(--ink-3)">alfi.co/</span>
+                <span class="mono" style="font-size:12px;font-weight:600;background:var(--accent-bg);color:var(--accent-fg);padding:1px 5px;border-radius:3px"><%= l[:slug] %></span>
+                <% if l[:hot] %><%= icon :bolt, size: 10, stroke: 2.2, style: "color:var(--accent)" %><% end %>
+              </div>
+            </td>
+            <td style="font-size:12px;color:var(--ink-2)"><%= l[:target] %></td>
+            <td class="num r" style="color:var(--ink)"><%= mono_n l[:clicks] %></td>
+            <td class="num r" style="color:var(--ink-2)"><%= l[:ctr] %></td>
+            <td class="num r" style="color:var(--pos);font-weight:600"><%= usd l[:earned] %></td>
+            <td><%= l[:live] ? status_tag(:live) : status_tag(:paused) %></td>
+            <td>
+              <div class="row" style="gap:4px;justify-content:flex-end">
+                <button class="btn sm ghost" style="padding:3px 6px"><%= icon :link, size: 11 %></button>
+                <button class="btn sm ghost" style="padding:3px 6px"><%= icon :chart, size: 11 %></button>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
